@@ -13,6 +13,22 @@ from backend.app.services.preprocessing import (
     generate_synthetic_21x21_layout,
     PreprocessingError,
 )
+from backend.app.services.layout_service import (
+    LayoutService,
+    layout_service,
+    create_layout,
+    list_layouts,
+    get_layout,
+    update_layout,
+    delete_layout,
+    validate_layout_permutation,
+    LayoutServiceError,
+    DatasetNotFoundError,
+    LayoutNotFoundError,
+    InvalidLayoutPermutationError,
+    ImmutableLayoutError,
+    LayoutAlreadyExistsError,
+)
 
 __all__ = [
     "inspect_uploaded_file",
@@ -25,4 +41,18 @@ __all__ = [
     "preprocess_retail_month",
     "generate_synthetic_21x21_layout",
     "PreprocessingError",
+    "LayoutService",
+    "layout_service",
+    "create_layout",
+    "list_layouts",
+    "get_layout",
+    "update_layout",
+    "delete_layout",
+    "validate_layout_permutation",
+    "LayoutServiceError",
+    "DatasetNotFoundError",
+    "LayoutNotFoundError",
+    "InvalidLayoutPermutationError",
+    "ImmutableLayoutError",
+    "LayoutAlreadyExistsError",
 ]

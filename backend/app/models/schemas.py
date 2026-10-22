@@ -20,6 +20,9 @@ class ErrorCode(str, Enum):
     MALFORMED_ORDER = "MALFORMED_ORDER"
     INVALID_SLOT_ASSIGNMENT = "INVALID_SLOT_ASSIGNMENT"
     EMPTY_FILE = "EMPTY_FILE"
+    LAYOUT_NOT_FOUND = "LAYOUT_NOT_FOUND"
+    INVALID_LAYOUT_PERMUTATION = "INVALID_LAYOUT_PERMUTATION"
+    LAYOUT_ALREADY_EXISTS = "LAYOUT_ALREADY_EXISTS"
 
 
 class ErrorDetail(BaseModel):
@@ -316,6 +319,29 @@ class SaveLayoutRequest(BaseModel):
 LayoutSaveRequest = SaveLayoutRequest
 
 
+class CreateLayoutRequest(BaseModel):
+    """Request payload to create a customized player layout scenario."""
+    layout_id: Optional[str] = Field(default=None, description="Unique identifier for the layout")
+    name: Optional[str] = Field(default=None, description="Human-readable name")
+    description: Optional[str] = None
+    slot_assignments: dict[str, str] = Field(..., description="Mapping of slot_id -> sku")
+    layout: Optional[WarehouseLayout] = None
+
+    @field_validator("layout_id")
+    @classmethod
+    def validate_layout_id(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not v.strip():
+            raise ValueError("layout_id must not be empty string")
+        return v
+
+
+class UpdateLayoutRequest(BaseModel):
+    """Request payload to update an existing layout scenario."""
+    name: Optional[str] = Field(default=None, min_length=1, description="Updated human-readable name")
+    description: Optional[str] = None
+    slot_assignments: Optional[dict[str, str]] = Field(default=None, description="Updated mapping of slot_id -> sku")
+
+
 class SavedLayout(BaseModel):
     """Saved warehouse layout record."""
     dataset_id: str
@@ -323,11 +349,38 @@ class SavedLayout(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     slot_assignments: dict[str, str] = Field(default_factory=dict)
-    layout: Optional[WarehouseLayout] = None
+    revision: int = Field(default=1, description="Scenario revision number, incremented on updates")
     created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    layout: Optional[WarehouseLayout] = None
 
 
+LayoutRecord = SavedLayout
 LayoutDetail = SavedLayout
+
+
+class LayoutPermutation(BaseModel):
+    """Permutation mapping for warehouse layout validation."""
+    slot_assignments: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_input(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "slot_assignments" in data:
+                return data
+            if "permutation" in data:
+                return {"slot_assignments": data["permutation"]}
+            return {"slot_assignments": data}
+        return data
+
+
+class LayoutValidationResult(BaseModel):
+    """Result of validating a layout permutation against dataset constraints."""
+    is_valid: bool
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    details: Optional[dict[str, Any]] = None
 
 
 class LayoutsListResponse(BaseModel):
