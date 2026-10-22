@@ -114,8 +114,8 @@ See [backend/DEPLOYMENT.md](backend/DEPLOYMENT.md) for full architecture details
 # 1. Run FastAPI backend
 uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 
-# 2. In a second terminal, connect the persistent named tunnel
-cloudflared tunnel run --token eyJhIjoiNTlkYzUwZWMxYzhkNWM2NGU4MjY5MTA1OTUzYzdlYmYiLCJ0IjoiYTVmZjJjMGItM2FlZi00ZWIwLThjMjAtNGQ4MzVlM2FhOTc4IiwicyI6IllXRmhZV0ZoWVdGaFlXRmhZV0ZoWVdGaFlXRmhZV0ZoWVdGaFlXRmhZV0U9In0=
+# 2. In a second terminal, connect the persistent named tunnel (set CLOUDFLARE_TUNNEL_TOKEN in your environment or secret manager)
+cloudflared tunnel run --token "$CLOUDFLARE_TUNNEL_TOKEN"
 ```
 
 ### Alternative Deployments

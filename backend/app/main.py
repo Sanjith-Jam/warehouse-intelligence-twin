@@ -8,6 +8,8 @@ from backend.app.api import (
     warehouse_router,
     orders_router,
     simulate_router,
+    datasets_router,
+    layouts_router,
 )
 
 app = FastAPI(
@@ -20,7 +22,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_origin_regex=r"https://.*\.warehouse-intelligence-twin\.pages\.dev",
+    allow_origin_regex=r"https://([a-zA-Z0-9_\-]+\.)*warehouse-intelligence-twin\.pages\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +34,8 @@ app.include_router(demo_router)
 app.include_router(warehouse_router)
 app.include_router(orders_router)
 app.include_router(simulate_router)
+app.include_router(datasets_router)
+app.include_router(layouts_router)
 
 
 if __name__ == "__main__":

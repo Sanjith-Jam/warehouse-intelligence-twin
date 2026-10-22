@@ -8,6 +8,10 @@ __pycache__/
 .env.*
 !.env.example
 data/raw/
+.worktrees/
+backend/app/data/uploads/
+*_export.csv
+data/uploads/
 *.xlsx
 *.xls
 datasets/
@@ -17,3 +21,6 @@ datasets/
 *.tsbuildinfo
 .wrangler/
 .vite/
+
+# Superpowers scratch
+.superpowers/
