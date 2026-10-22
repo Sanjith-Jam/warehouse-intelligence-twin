@@ -13,7 +13,7 @@
 | Sprint start (local time) | 2026-10-22 10:54:05 IST (repository bootstrap start recorded in STATUS.md) |
 | Sprint target end | T+180 min (or earlier if official submission closes) |
 | Canonical GitHub repo | https://github.com/Sanjith-Jam/warehouse-intelligence-twin |
-| Demo URL | TBD |
+| Demo URL | https://warehouse-intelligence-twin.pages.dev — static frontend preview; real backend not yet connected |
 | Commit at start | [5d9862e](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/5d9862e95fe196bf4ada32100dd69bcbc5707163) — initial commit, 2026-10-22 10:54:16 IST |
 | Dataset source / license | UCI Online Retail II, https://doi.org/10.24432/C5CG6D, CC BY 4.0; actual file and preprocessing unverified |
 | Coordinator | Codex |
@@ -78,7 +78,7 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Change:** React/Vite/TypeScript/R3F app with original primitive racks/cartons, dock, picker, isometric/top cameras, keyboard-accessible two-slot swapping, demand shading, product search, orders, server-backed original/baseline/player comparison, live replay counters, play/pause/reset, and explicit 6x playback. Offline synthetic preview is visibly labeled and unscored.
 - **Files:** frontend/**, DESIGN.md, THIRD_PARTY_NOTICES.md, README.md, .gitignore.
 - **Branch:** codex/frontend.
-- **Commit / PR:** [10e7de6f682469f9364db8bb9ec1fbfa4493c152](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/10e7de6f682469f9364db8bb9ec1fbfa4493c152); PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) (review/merge pending at entry update)..
+- **Commit / PR:** [10e7de6f682469f9364db8bb9ec1fbfa4493c152](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/10e7de6f682469f9364db8bb9ec1fbfa4493c152); PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) (later squash-merged as 6089b88)..
 - **Validation (Codex rerun):** npm test passed 3/3, 0 failures; npm run build passed TypeScript and Vite 7.3.7 (594 modules), JS 1,172.28 kB / 331.02 kB gzip. Node environment v26.11.1; declared support is >=22.12, not independently tested on that minimum. git diff --check passed.
 - **Browser verification:** Playwright CLI synthetic API fixture passed identical ordered inputs/speed across policies, policy switching, play/pause/reset, stale-result invalidation after swaps, new mapping submission, orders tab, top view, and 390px no-horizontal-overflow check. Fresh synthetic run had 0 console errors/warnings. Reproducible fixture is frontend/checks/browser-contract-check.js. This does not verify AGY backend or real savings.
 - **Offline verification:** Returned browser to unmocked preview; no backend is running locally, so Vite proxy /api/demo returned HTTP 500 and UI accurately displayed backend unavailable, scoring disabled. Screenshot captured outside product repository in task outputs/warehouse-frontend-preview.png.
@@ -87,6 +87,18 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Reference evidence:** WareTwin MIT revision 81f365f323e1a097e5819ca9045637544163f219 and 3D Express Warehouse MIT revision 8554816a504416f7327e47862e9f29053927e179 cloned/read outside product tree; no code/assets copied or untrusted scripts executed. SI Storage showcase read; source URL HTTP 404. Reference agent recorded 05:30:33–05:31:54 UTC; see THIRD_PARTY_NOTICES.md.
 - **Blockers / risks:** AGY has no open PR at latest explicit checkpoint. Real data, real backend integration, public deployment, and hardware performance remain unverified. Vite warns about bundle size; optional analytics intentionally omitted.
 - **Next integration dependency:** Publish/review/squash frontend PR; install Cloudflare setup requested by operator and deploy static frontend on free tier. Public preview will remain unscored until backend is connected.
+
+### [2026-10-22 11:23:59 IST | T+029] Cloudflare setup and Pages deployment verified; first backend PR reviewed
+- **Owner / model:** Codex integration lead; frontend source milestone by Sol Medium.
+- **Frontend merge:** PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) squash-merged to main [6089b88](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/6089b88). Frontend branch synced with main afterward.
+- **Setup:** Fetched operator-requested https://developers.cloudflare.com/agent-setup/prompt.md; ran its non-Claude global Cloudflare skills installer. All 19 skills installed for Codex; installer also reported unsupported PromptScript global-install targets (not a Codex installation failure). Cloudflare MCP registered in user config; fresh codex mcp login completed with operator authorization. codex mcp list reports o_auth. Wrangler 4.151.3 OAuth verified for the operator account. No credential values were copied to source or log; optional beta cf CLI was not installed. New MCP tools require a later agent reload/restart to become available in the current session.
+- **Deployment:** Created Direct Upload Pages project warehouse-intelligence-twin, production branch main, and uploaded the verified build. Production https://warehouse-intelligence-twin.pages.dev; deployment https://2ce31c6d.warehouse-intelligence-twin.pages.dev. Four static files, total 1,184,965 bytes; largest file 1,172,278 bytes; no Pages Functions.
+- **Validation:** HTTP HEAD to production returned 200. Browser loaded correct title and canvas; verified backend-unavailable preview is visible, Replay & compare disabled, desktop horizontal overflow false. These checks prove frontend hosting only, not backend/data correctness.
+- **Deployment incident:** Current Wrangler pages project create automatically delegated toward Workers and mutated local package/Vite/deploy configuration. The delegated process completed a temporary Worker deployment before cancellation could take effect. Restored only CLI-generated changes to the clean tested source, rebuilt successfully, then used the source-verified create --force opt-out to create actual Pages; later Pages deploy used no force. The unintended Worker was then deleted successfully; the separate Pages deployment remains live. No other agent source was discarded.
+- **Backend review:** AGY PR [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3), head 645397a, inspected in isolated worktree. Installed declared requirements in isolated uv environment; python -m pytest tests -q passed 12 tests (0.13s), one Starlette/httpx deprecation warning. System Python's first test attempt lacked pytest and did not run tests.
+- **Exact blocker:** POST /api/simulate with policy original and speed_mps string NaN returns 200 and an incorrect 10-second handling-only time for a 3m route; contract requires finite speed and 422. Commented exact reproduction and requested AGY fix its branch. Shared DEV_LOG/STATUS merge conflicts must preserve both agents' entries; production Pages CORS requested. No backend merge performed.
+- **New user direction:** Frontend considered too simple; Sol Medium dispatched for a scene-first industrial workspace redesign using inspected source references. User explicitly requires actual UCI data; AGY requested to deliver the real-month preprocessing milestone, hashes/counts/filter provenance and ~100 SKUs. No real data processing is claimed by this entry.
+- **Next:** Integrate AGY's corrected PR, inspect upgraded frontend, and redeploy only the verified next build.
 
 ### Entry format (copy for each actual event)
 
@@ -125,7 +137,7 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 
 | Planned branch | Scope | Opened PR / URL | Commit | Tests | Codex review | Merge SHA |
 | codex/dev-log | Canonical development log | [#1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/1) | 2432aec | Documentation diff whitespace check passed | Codex merged | eed189f |
-| codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex review complete; merge pending | Pending |
+| codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex reviewed and squash-merged | 6089b88 |
 |---|---|---|---|---|---|---|
 | `agy/01-api-scaffold` | FastAPI `/health`, API skeleton | Not opened | — | — | Pending | — |
 | `agy/02-orders-data` | Retail preprocessing and stable order fixtures | Not opened | — | — | Pending | — |
@@ -232,3 +244,12 @@ For AI-generated code, record agent/model where known, scope, human inspection p
 **Final repository commit:** TBD
 
 **Submission links and timestamps:** TBD
+
+### [2026-10-22 11:23:38 IST | T+029] Additional named design references inspected
+- **Owner / model:** Reference subagent; exact model not asserted.
+- **Change:** Verified official WATON, WareBee, and Siemens/NVIDIA sources, plus a related ConnectMQ conveyor tutorial; sent observed scene/panel/slotting ideas to Sol. No source code or assets copied.
+- **Files:** THIRD_PARTY_NOTICES.md.
+- **Commit / PR:** Included in the deployment/reference documentation milestone; see Git history.
+- **Validation:** Source retrieval and documentation reads only; no application tests run for this research entry.
+- **Blockers / risks:** Exact project named Digital Twin Conveyor was not uniquely verified; related tutorial is identified as such. Vendor performance figures are not this project's measurements.
+- **Next:** Sol applies the requested visual upgrade without adding unverified telemetry or savings.

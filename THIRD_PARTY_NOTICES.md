@@ -14,6 +14,19 @@ Files read included WareTwin's `README.md`, `LICENSE`, `Scene3D.tsx`, `RackInsta
 
 These are research acknowledgements, not claims that their source was incorporated. If source or assets are incorporated later, record the exact origin and retain the applicable license and copyright notices. SI Storage media and source are not included.
 
+### Additional industrial design references
+
+Official pages retrieved on 22 October 2026 through Firecrawl search and page retrieval. These pages describe vendor products; they do not establish an open-source license. No vendor code, models, screenshots, logos, or other assets are incorporated.
+
+| Reference | Observed material | Application to this project |
+| --- | --- | --- |
+| [WATON — WATA AI](https://www.wata-ai.com/en/waton) | The product page describes warehouse walls, racks, floor loading, docks, safety tape, an object properties panel, and top/front/3D views. | Inspiration for an original industrial scene with a visible floor slab, open-front walls, rack frames, dock markings, and a selected-slot inspector. |
+| [WareBee Digital Twin](https://warebee.com/digital-twin/) | The page describes historical orders, navigation maps, alternative slotting layouts compared through reports, and ABC/velocity heatmaps. | Inspiration for aligned original/baseline/player comparison rows and a secondary demand-color legend. |
+| [Siemens/NVIDIA industrial digital twins](https://www.nvidia.com/en-us/case-studies/siemens-accelerates-product-development-and-innovation-with-industrial-ai/) | The official case study describes combining 2D/3D data with operational information, including conveyor, pallet, and operator paths. | Inspiration for keeping the spatial scene prominent while grouping operational status, selected-object details, and measured simulation results beside it. |
+| [ConnectMQ conveyor digital twin tutorial](https://connectmq.com/blog/conveyor-digital-twin/) | This related tutorial explains motion driven by physical speed units, repeated instanced geometry, status indicators, and stopping movement when telemetry is stale. | General animation/status inspiration only; no MQTT, equipment control, hardware, or tutorial source is incorporated. |
+
+The exact reference named “Digital Twin Conveyor” was not uniquely identified. The ConnectMQ tutorial above is a related discovery, not a verified match. A playback timeline is this project's own requirement-driven design choice, not an observed feature attributed to that tutorial. Suggested colors, panel arrangement, and scene composition are implementation interpretations rather than verified vendor UI specifications. Vendor-reported performance improvements must not be presented as this project's results.
+
 ## Frontend package dependencies
 
 Direct package metadata inspected in `frontend/node_modules` on 22 October 2026:

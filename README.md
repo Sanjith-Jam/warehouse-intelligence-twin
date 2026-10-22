@@ -31,7 +31,7 @@ Warehouse geometry, rack positions, speed, and handling times are synthetic assu
 
 ## Current state
 
-Frontend implementation now includes the 3D picking floor, camera presets, keyboard-accessible slot swaps, inventory/orders views, contract-based comparison, and route playback. A synthetic browser API fixture has exercised the comparison workflow. Real-data processing, backend integration, and public deployment remain unverified; no real savings are claimed.
+Frontend implementation now includes the 3D picking floor, camera presets, keyboard-accessible slot swaps, inventory/orders views, contract-based comparison, and route playback. A synthetic browser API fixture has exercised the comparison workflow. Real-data processing and backend integration remain unverified; no real savings are claimed.
 
 ## Development history and AI assistance
 
@@ -63,4 +63,18 @@ Frontend: React, TypeScript, Vite, Three.js, React Three Fiber, and Drei; plain 
 
 ## Submission status
 
-Selected problem: PS 4.2. Real month preprocessing, approximately 100 SKUs, aisle replay, and identical-orders three-layout evaluation must all work before stretch goals. PS 1.2 is an optional extension; no full text-to-SQL compliance is claimed. Public deployment, demo recording (up to five minutes), PowerPoint, LinkedIn/X links with #NEXAI2026, and team member details remain to be supplied and verified. Participant instructions mention both 3:00 PM and around 3:30 PM on 22 October 2026; use the earlier time for preparation until organizers clarify.
+Selected problem: PS 4.2. Real month preprocessing, approximately 100 SKUs, aisle replay, and identical-orders three-layout evaluation must all work before stretch goals. PS 1.2 is an optional extension; no full text-to-SQL compliance is claimed. Demo recording (up to five minutes), PowerPoint, LinkedIn/X links with #NEXAI2026, and team member details remain to be supplied and verified. Participant instructions mention both 3:00 PM and around 3:30 PM on 22 October 2026; use the earlier time for preparation until organizers clarify.
+
+## Cloudflare Pages deployment
+
+Production: https://warehouse-intelligence-twin.pages.dev
+
+Verified deployment: https://2ce31c6d.warehouse-intelligence-twin.pages.dev (source main `6089b88`). Static assets only; no Pages Functions, paid services, or plan upgrade were provisioned for this Pages project. At this milestone, the backend is not configured publicly, so the preview is labeled synthetic and comparison scoring is disabled.
+
+After building in `frontend/`, deploy a later verified milestone with:
+
+```sh
+npx -y wrangler@4.151.3 pages deploy dist --project-name warehouse-intelligence-twin --branch main
+```
+
+Use the same Cloudflare account and set `VITE_API_BASE_URL` to the verified public backend origin before building when available. Credentials remain in the local OAuth store, outside this repository. This is a Direct Upload Pages project; updates use the command above. Switching this project to Git integration later requires a new Pages project, per [Cloudflare Direct Upload documentation](https://developers.cloudflare.com/pages/get-started/direct-upload/).

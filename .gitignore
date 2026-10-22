@@ -12,3 +12,5 @@ data/raw/
 *.duckdb.wal
 .DS_Store
 *.tsbuildinfo
+.wrangler/
+.vite/
