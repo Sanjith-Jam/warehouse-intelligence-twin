@@ -30,8 +30,13 @@ from backend.app.models.schemas import (
     # Layout management
     SaveLayoutRequest,
     LayoutSaveRequest,
+    CreateLayoutRequest,
+    UpdateLayoutRequest,
     SavedLayout,
+    LayoutRecord,
     LayoutDetail,
+    LayoutPermutation,
+    LayoutValidationResult,
     LayoutsListResponse,
     LayoutListResponse,
     # Legacy / bootstrap responses
@@ -77,8 +82,13 @@ __all__ = [
     # Layout management
     "SaveLayoutRequest",
     "LayoutSaveRequest",
+    "CreateLayoutRequest",
+    "UpdateLayoutRequest",
     "SavedLayout",
+    "LayoutRecord",
     "LayoutDetail",
+    "LayoutPermutation",
+    "LayoutValidationResult",
     "LayoutsListResponse",
     "LayoutListResponse",
     # Legacy / bootstrap responses

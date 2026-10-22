@@ -9,6 +9,7 @@ from backend.app.api import (
     orders_router,
     simulate_router,
     datasets_router,
+    layouts_router,
 )
 
 app = FastAPI(
@@ -34,6 +35,7 @@ app.include_router(warehouse_router)
 app.include_router(orders_router)
 app.include_router(simulate_router)
 app.include_router(datasets_router)
+app.include_router(layouts_router)
 
 
 if __name__ == "__main__":

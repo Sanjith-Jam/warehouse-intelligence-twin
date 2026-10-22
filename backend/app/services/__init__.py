@@ -7,6 +7,22 @@ from backend.app.services.parsing import (
     get_dataset_dir,
     get_dataset_meta,
 )
+from backend.app.services.layout_service import (
+    LayoutService,
+    layout_service,
+    create_layout,
+    list_layouts,
+    get_layout,
+    update_layout,
+    delete_layout,
+    validate_layout_permutation,
+    LayoutServiceError,
+    DatasetNotFoundError,
+    LayoutNotFoundError,
+    InvalidLayoutPermutationError,
+    ImmutableLayoutError,
+    LayoutAlreadyExistsError,
+)
 
 __all__ = [
     "inspect_uploaded_file",
@@ -15,4 +31,18 @@ __all__ = [
     "save_uploaded_dataset",
     "get_dataset_dir",
     "get_dataset_meta",
+    "LayoutService",
+    "layout_service",
+    "create_layout",
+    "list_layouts",
+    "get_layout",
+    "update_layout",
+    "delete_layout",
+    "validate_layout_permutation",
+    "LayoutServiceError",
+    "DatasetNotFoundError",
+    "LayoutNotFoundError",
+    "InvalidLayoutPermutationError",
+    "ImmutableLayoutError",
+    "LayoutAlreadyExistsError",
 ]
