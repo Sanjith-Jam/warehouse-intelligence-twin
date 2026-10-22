@@ -10,6 +10,7 @@ __pycache__/
 data/raw/
 .worktrees/
 backend/app/data/uploads/
+*_export.csv
 data/uploads/
 *.xlsx
 *.xls
