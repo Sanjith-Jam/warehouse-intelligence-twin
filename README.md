@@ -32,3 +32,7 @@ Warehouse geometry, rack positions, speed, and handling times are synthetic assu
 ## Current state
 
 Repository scaffold and shared contract only. Frontend and backend implementation are pending. No working demo or deployment is claimed.
+
+## Development history and AI assistance
+
+See [DEV_LOG.md](DEV_LOG.md) for verified milestones, failures, decisions, tests, and pending work. Codex performs integration; a Sol Medium frontend agent has been dispatched. AGY is operator-launched for backend work. Agent/model claims and test outcomes are recorded only when known; setup does not imply a completed feature.

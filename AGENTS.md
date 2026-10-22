@@ -49,3 +49,7 @@ P0: Real one-month order preprocessing (~100 SKUs); walkable aisle-path 3D picke
 - **Codex polls GitHub at each handoff and milestone**, runs smoke/integration tests, requests precise corrections for failed PRs, and squash-merges acceptable PRs promptly. **AGY never merges its own PR or pushes to main.** Neither agent force-pushes nor silently edits the other's directory.
 - To avoid competing branch dependencies, AGY branches from the latest `main` for each milestone; when a previous PR has not merged and the next change depends on it, continue on the same PR branch and update it rather than stack unrelated PRs unless Codex explicitly coordinates stacked PRs.
 - Codex syncs frontend worktree with `main` after merges and manages deployment/submission. Minimize busy polling and costly agent turns; request a review only after actual code/test changes.
+
+## Canonical development log (operator requirement)
+
+All agents must record completed milestones, commit SHAs, PR URLs, exact test commands/results, blockers, and important technical decisions in root `DEV_LOG.md`. Never fabricate work, timestamps, tests, or dataset metrics. AGY updates the log in its milestone PRs or supplies entries through PR descriptions/comments for Codex to incorporate. Codex resolves conflicting edits and maintains the canonical log on main. Existing template/planning rows do not prove completion. Read README ownership overrides and contracts/api.md for current role assignments and endpoint names.
