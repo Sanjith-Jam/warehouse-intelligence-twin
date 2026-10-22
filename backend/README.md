@@ -1,6 +1,6 @@
 # Warehouse Intelligence Twin — Backend
 
-FastAPI backend scaffold for deterministic warehouse simulation, aisle-respecting path routing, and slotting endpoints. **Current data is a one-product synthetic fixture**; the public real-data preview is not yet connected to this API, so do not report its simulation results as UCI metrics. Follow the current data-loader and simulation milestones in [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md).
+FastAPI service for deterministic warehouse simulation, aisle-respecting routing, and slotting. It loads the committed June 2011 UCI Online Retail II snapshot by default. The current public API is exposed through an ephemeral Cloudflare Quick Tunnel; see the root [`IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md) for deployment limitations and next steps.
 
 ## Prerequisites
 
@@ -74,7 +74,7 @@ All endpoints strictly adhere to `contracts/api.md`:
 
 ## Current scope
 
-The API routes and simulator implement the shared contract against a synthetic fixture. Real June 2011 preprocessing, the 100-SKU service response, and public API deployment are pending. Optional analytics are out of scope until PS 4.2 is complete.
+The API routes and simulator implement the shared contract against 100 real products and 20 deterministic selected orders. The warehouse geometry and travel assumptions remain synthetic. The preprocessing script requires a local UCI workbook; its current default path is specific to the original build environment, so pass `--input` on other machines. Optional analytics are deferred.
 
 ## Architecture & Module Layout
 

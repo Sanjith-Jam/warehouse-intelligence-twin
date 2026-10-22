@@ -1,23 +1,20 @@
 # Current Status
 
-**Primary target:** NEXAI PS 4.2 — Warehouse Digital Twin. **GitHub:** https://github.com/Sanjith-Jam/warehouse-intelligence-twin. **Production frontend:** https://warehouse-intelligence-twin.pages.dev.
+**Target:** NEXAI PS 4.2 — Warehouse Digital Twin. **Repository:** https://github.com/Sanjith-Jam/warehouse-intelligence-twin. **Pages:** https://warehouse-intelligence-twin.pages.dev. **Latest verified Pages release:** https://b4229a4a.warehouse-intelligence-twin.pages.dev.
 
-## Verified now
+## Delivered
 
-- Public Cloudflare Pages site responds successfully and serves the June 2011 UCI preview (`dataset_id=uci-2011-06-preview-bcbe73b35f5b`, 100 SKUs, 20 orders, `real_order_data=true`).
-- `frontend/public/demo-provenance.json` records the preview's source, filters, workbook hash, counts, and synthetic warehouse assumptions.
-- Main contains the React Three Fiber operations interface and PR #3's FastAPI contract scaffold, deterministic router, and tests. Backend tests previously passed 13/13 in the reviewed PR.
-- Codex owns frontend, contract, docs, deployment, review, and merge. AGY owns backend, tests, and preprocessing scripts.
-- Current local verification: frontend unit tests passed 3/3; TypeScript/Vite production build succeeded (595 modules); backend tests passed 13/13. Vite reports a 1,176 kB minified JavaScript chunk warning. Backend pytest emits one Starlette/httpx deprecation warning.
+- The frontend uses the actual UCI Online Retail II June 2011 snapshot: 100 products and 20 deterministic orders with public provenance.
+- The backend loads the matching real-data snapshot and returns deterministic aisle-respecting simulation routes for original, fast-mover baseline, and player layouts. The selected orders are the same across policies.
+- AGY's real-data milestone PR #6 and end-to-end Pages integration PR #8 are merged. Latest integration commit on remote `main` is `a3f7d0a`.
+- Current verification of the live service: `/health` HTTP 200; `/api/demo` returns `real_order_data=true`, 100 products, 100 slots and 20 orders; original/baseline/player simulations all returned matching dataset/order counts; browser-style CORS preflight from Pages returned 200. Results were original 2,844.0 m / 3,470.0 s, baseline 2,820.0 m / 3,450.0 s, and player-original assignment 2,844.0 m / 3,470.0 s. Layout, speed, and handling remain assumptions.
+- Current local checks: frontend unit tests 3/3 pass; Vite/TypeScript build succeeds (595 modules, 1,176 kB minified JS with the existing chunk-size warning); backend pytest 14/14 passes (one Starlette/httpx deprecation warning).
 
-## Still incomplete
+## Availability and remaining work
 
-- Backend currently loads a one-product synthetic fixture; it is not connected to the real June 2011 snapshot.
-- No public Python API is deployed. The Pages app is therefore a real-data preview only; same-orders original/baseline/player metrics and picker playback against the real dataset are not verified.
-- Final team roster, demo recording, pitch deck, and LinkedIn/X URLs are not present.
+- The Pages frontend is public. Its backend URL is a Cloudflare Quick Tunnel that relies on running local `uvicorn` and `cloudflared` processes. Those processes were alive at the latest check, but their hostname and uptime are not durable.
+- `scripts/preprocess_retail.py` currently has a machine-specific default workbook path; use `--input` explicitly or fix portability before treating the default command as reproducible on another checkout.
+- Final human team roster, demo recording, pitch deck, and LinkedIn/X post links are not in the repository.
+- Optional text-to-SQL and stretch goals are deferred.
 
-## Next action
-
-AGY starts `agy/02-orders-data` from latest `main` and opens a focused PR with a reproducible, provenance-backed real-month loader. After it merges, deliver real-data simulation/integration. Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); no analytics/stretch work until the PS 4.2 gates pass.
-
-No metrics or completed work should be inferred beyond the evidence above. Update this file in the next milestone PR with exact branch, SHA, tests, and blockers.
+Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Codex retains frontend and Git merge authority; AGY remains the backend/data owner and should use small PRs for remaining backend work.

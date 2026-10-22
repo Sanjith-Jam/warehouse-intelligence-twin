@@ -10,7 +10,7 @@ Read `PROJECT_CONTEXT.md`, `RESEARCH_REPOS_AND_IDEAS.md`, `WORK_PLAN_3H.md`, `co
 
 ## Current priority
 
-Complete PS 4.2 before optional analytics or stretch goals. The production site is a real-data static preview; the backend still uses a synthetic fixture and is not publicly deployed. AGY's next milestone is the reproducible June 2011 UCI data loader, followed by integrated real-order path simulation. See `IMPLEMENTATION_PLAN.md` for exact acceptance gates.
+The mandatory PS 4.2 implementation is integrated: the API serves real June 2011 data and the Pages frontend is connected through a currently running Quick Tunnel. The tunnel is ephemeral. Prioritize portable preprocessing and a durable API origin before analytics or stretch goals. See `IMPLEMENTATION_PLAN.md` for exact handoff gates.
 
 ## PR and verification rules
 

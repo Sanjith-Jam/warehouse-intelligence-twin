@@ -1,89 +1,116 @@
 # Warehouse Intelligence Twin
 
-Warehouse Intelligence Twin is a 3D picking-floor game for **NEXAI PS 4.2**. It uses real order demand from one month of UCI Online Retail II to populate a browser warehouse. Players swap products between fixed rack slots; the intended scoring replays the same orders against the original layout, a fast-mover baseline, and the player's layout using aisle-respecting routes.
+Warehouse Intelligence Twin is a **NEXAI PS 4.2** browser game for warehouse slotting. It converts one month of UCI Online Retail II transactions into product demand and selected orders, then replays the same orders through original, fast-mover baseline, and player-selected layouts. A 3D picking floor shows aisle routes and measured simulation distance and time.
 
-## Current demo
+## Live demo and source
 
-- **Live app:** [warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev)
-- **Repository:** [github.com/Sanjith-Jam/warehouse-intelligence-twin](https://github.com/Sanjith-Jam/warehouse-intelligence-twin)
+- **Live app:** [https://warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev)
+- **Latest verified release:** [Pages deployment](https://b4229a4a.warehouse-intelligence-twin.pages.dev)
+- **Source:** [GitHub repository](https://github.com/Sanjith-Jam/warehouse-intelligence-twin)
 - **Development log:** [DEV_LOG.md](DEV_LOG.md)
-- **Remaining implementation plan:** [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
+- **Remaining work and handoff:** [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
 
-The public site currently loads a verified June 2011 UCI preview with 100 products and 20 selected real orders. The warehouse floor and slot assignments are simulated. The FastAPI service currently uses a small synthetic fixture and has not been deployed publicly, so the live page is an **unscored preview**; it does not yet provide valid real-order before/after savings. The current backend/demo gap is tracked in the implementation plan. No savings, pick times, or performance claims are published as real results.
+The live frontend currently calls a FastAPI backend through a Cloudflare Quick Tunnel. The connection was verified with real June 2011 orders and all three simulation policies. The tunnel depends on local `uvicorn` and `cloudflared` processes and its hostname can expire; if that happens, the app falls back to the real-data preview without scoring. A durable backend URL is the main remaining deployment task.
 
 ## Problem and solution
 
-Pickers can spend substantial time walking between shelves. PS 4.2 asks for a digital twin driven by real order data, where the same order set is replayed after a player changes product locations. This project combines an order-data pipeline, deterministic warehouse routing, and a 3D React interface. The warehouse geometry is synthetic because Online Retail II does not include warehouse locations.
+Pickers can spend more time walking between shelves than collecting products. PS 4.2 asks for a digital twin driven by real order demand and a game that measures how product placement changes walking. This project preprocesses one real month, places its top 100 products in a synthetic warehouse, and lets players swap slots. The simulator routes through walkable aisle cells and returns to the packing dock after each order.
 
-## Architecture and stack
+The current verified replay used the same 20 selected invoices, 1.2 m/s walking speed, 10 seconds of handling per order line, and the same synthetic 21×21 warehouse for all policies:
+
+| Layout | Walking distance | Total estimated pick time |
+|---|---:|---:|
+| Original | 2,844.0 m | 3,470.0 s |
+| Fast-mover baseline | 2,820.0 m | 3,450.0 s |
+| Player using original assignment | 2,844.0 m | 3,470.0 s |
+
+The baseline saves 24.0 m (0.8%) and 20 seconds across these 20 orders in this simulation. The geometry, walking speed, and handling time are assumptions, not physical warehouse measurements. The player row uses the original assignment; no claim is made that every player layout beats the baseline.
+
+## Architecture and technology
 
 ```mermaid
 flowchart LR
   UCI[UCI Online Retail II workbook] --> ETL[Python preprocessing]
-  ETL --> API[FastAPI data and simulation API]
-  API --> ROUTE[Deterministic aisle routing and slotting]
-  ROUTE --> UI[React and React Three Fiber]
+  ETL --> API[FastAPI real-order API]
+  API --> SIM[Deterministic aisle routing and slotting]
+  SIM --> UI[React / TypeScript / React Three Fiber]
   UI -->|same order IDs and player assignment| API
-  UI --> COMP[Original / fast-mover baseline / player comparison]
+  UI --> COMP[Original / baseline / player comparison]
 ```
 
-- **Frontend:** React, TypeScript, Vite, Three.js, React Three Fiber, Drei, and CSS.
-- **Backend:** Python, FastAPI, Pydantic, and pandas. Deterministic BFS routes follow walkable aisle cells and return to the packing dock.
-- **Contract:** [`contracts/api.md`](contracts/api.md) defines the shared endpoints, data invariants, scoring assumptions, and response validation.
-- **Data and geometry:** June 2011 source preview is in `frontend/public/demo.json`; its source, filters, workbook hash, and counts are in `frontend/public/demo-provenance.json`. A reproducible backend pipeline and real-data API integration remain to be completed.
-- **Hosting:** Cloudflare Pages serves the static frontend. The backend has no public deployment yet.
+- **Frontend:** React 19, TypeScript, Vite, Three.js, React Three Fiber, Drei, and CSS. Racks, cartons, picker, and floor use original lightweight meshes.
+- **Backend and preprocessing:** Python, FastAPI, Pydantic, pandas, and deterministic breadth-first search over walkable grid cells.
+- **Contract:** [`contracts/api.md`](contracts/api.md) defines the API, stable slot IDs, route invariants, and metric assumptions.
+- **Hosting:** Cloudflare Pages Direct Upload for the static frontend; the current FastAPI origin is reached through an ephemeral Cloudflare Quick Tunnel.
 
-## Run locally
+## Local setup
 
-Prerequisites: Node.js 22.12 or newer; Python 3.11 or newer for the API.
+Prerequisites: Node.js 22.12 or later and Python 3.11 or later.
+
+Start the backend from the repository root:
 
 ```sh
-git clone https://github.com/Sanjith-Jam/warehouse-intelligence-twin.git
-cd warehouse-intelligence-twin
-
-# Terminal 1: backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r backend/requirements.txt
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-# Terminal 2: frontend
+In a second terminal, start the frontend:
+
+```sh
 cd frontend
 npm ci
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). Vite proxies `/api` to `http://localhost:8000`. The currently checked-in API fixture is synthetic and is not compatible with the real-data preview's dataset identity; until AGY completes the integration, the UI remains an unscored preview. To inspect only the API fixture, visit `http://localhost:8000/docs`.
+Open [http://localhost:5173](http://localhost:5173). Vite proxies `/api` to the local backend. Open [http://localhost:8000/docs](http://localhost:8000/docs) for the API docs.
 
-Frontend checks: `cd frontend && npm test && npm run build`. Backend checks: from the repository root, `pytest tests/ -v` after installing `backend/requirements.txt`.
+Run checks from the repository root or frontend directory as appropriate:
 
-For a separately hosted API, set `VITE_API_BASE_URL` to its public origin at frontend build time and configure that API's CORS allowlist for `https://warehouse-intelligence-twin.pages.dev`. See [`frontend/.env.example`](frontend/.env.example) and [`backend/.env.example`](backend/.env.example). These values are public configuration; never put credentials in frontend environment variables.
+```sh
+pytest tests/ -v
+cd frontend && npm test && npm run build
+```
 
-## Data attribution and rules
+To reproduce the data export, download the UCI workbook described below and provide its path explicitly:
 
-Dataset: Chen, D. (2012), **Online Retail II**, UCI Machine Learning Repository, [dataset 502](https://archive.ics.uci.edu/dataset/502/online+retail+ii), DOI [10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D), **CC BY 4.0**. The current preview uses the 2010–2011 worksheet and June 2011. It filters case-insensitive cancellation invoice IDs beginning with `C`, non-positive or missing quantities, blank stock codes, and known non-product/service codes before ranking products by positive picking-line frequency. Missing customer IDs are retained for picking; customer identifiers are not exposed in the preview. Full provenance and source file hashes are recorded in [`frontend/public/demo-provenance.json`](frontend/public/demo-provenance.json).
+```sh
+python scripts/preprocess_retail.py --input /path/to/online_retail_II.xlsx --sheet "Year 2010-2011" --month 2011-06
+```
 
-The original warehouse layout, aisle geometry, 1.5 m grid cell size, picker speed, and 10-second handling time per order line are simulation assumptions, not measurements from UCI. The project must use one immutable selected order list for all three layout policies and must show actual backend results before claiming improvements.
+The default script input points to the original build environment, so use `--input` on another machine. See [`frontend/.env.example`](frontend/.env.example) and [`backend/.env.example`](backend/.env.example) for public configuration examples. Never place credentials in frontend variables.
 
-## Team and tools
+## Data attribution and filtering
 
-- **S Sanjith** ([Sanjith-Jam](https://github.com/Sanjith-Jam)) — repository owner, integration lead, and frontend lead.
-- **Antigravity (AGY)** — backend implementation contributor; the human operator name was not provided in the project materials.
-- **AI assistance:** Codex and a Sol Medium frontend agent contributed code and integration work. Specific tasks and known decisions are documented in [`DEV_LOG.md`](DEV_LOG.md). AI tools do not replace team review or understanding of the submitted code.
+Dataset: Chen, D. (2012), **Online Retail II**, UCI Machine Learning Repository, [dataset 502](https://archive.ics.uci.edu/dataset/502/online+retail+ii), DOI [10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D), licensed **CC BY 4.0**.
 
-Libraries and reference repositories are listed in [`frontend/package.json`](frontend/package.json), [`backend/requirements.txt`](backend/requirements.txt), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). No code or assets were copied from the inspected warehouse references.
+This release uses June 2011 from the `Year 2010-2011` worksheet. Its source workbook SHA-256 is `bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`. The preprocessing filters cancellation invoices beginning with `C` (case-insensitive), missing/non-positive quantities, blank stock codes, and documented service/non-product codes before ranking the 100 most frequently picked SKUs. Frequency means retained positive order lines, not units. The first 20 eligible invoices are selected deterministically; empty orders are omitted and remaining lines are restricted to the top 100 SKUs. Missing customer IDs are retained for picking, and customer identifiers are not exposed.
+
+[`backend/app/data/demo-provenance.json`](backend/app/data/demo-provenance.json) records source, hash, filters, counts, selection, and warehouse assumptions. The UCI workbook itself is not committed.
+
+## Team and AI tools
+
+- **S Sanjith** ([Sanjith-Jam](https://github.com/Sanjith-Jam)) — repository owner, frontend/integration lead, and Cloudflare Pages publisher.
+- **Antigravity (AGY)** — backend/data implementation and PR contributor. The human operator's name or public handle was not included in the handoff materials.
+- **AI assistance:** Codex and a Sol Medium frontend agent contributed frontend and integration work; Antigravity agents contributed backend work. See [`DEV_LOG.md`](DEV_LOG.md) for known model attribution and technical decisions. AI-generated code was reviewed before integration.
+
+Add any other human teammates' names and handles before final submission; they were not supplied in the project files. Dependency and reference attribution is in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Deployment
 
-The static preview is deployed on Cloudflare Pages at [https://warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev). Updates use Cloudflare Wrangler Direct Upload; after producing `frontend/dist`, run:
+Cloudflare Pages production is [warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev). The verified release is [b4229a4a.warehouse-intelligence-twin.pages.dev](https://b4229a4a.warehouse-intelligence-twin.pages.dev). This is a free static Pages deployment. The API is currently served by a local FastAPI process exposed through a temporary Quick Tunnel; this is not a durable service.
+
+For a local public demo, run the API, start `cloudflared tunnel --url http://127.0.0.1:8000`, then rebuild and publish with the active tunnel hostname:
 
 ```sh
 cd frontend
+VITE_API_BASE_URL=https://<active-tunnel-host>.trycloudflare.com npm run build
 npx -y wrangler@4.151.3 pages deploy dist --project-name warehouse-intelligence-twin --branch main
 ```
 
-The Pages project is on the free static hosting path and contains no API credentials or paid services. The API still needs a public host before the deployed app can score real orders. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the handoff and completion gates.
+The checked-in production bundle is already configured with the current verified tunnel URL. If the tunnel stops or expires, provision a stable Python-capable backend origin, set its CORS allowlist to the Pages domain, rebuild, and redeploy. Cloudflare Pages itself serves static assets and does not run this FastAPI app.
 
-## Submission materials
+## Remaining submission items
 
-The live app and source repository are linked above. A demo recording, pitch deck, and LinkedIn/X post URLs have not been added to this repository yet; add them here after they are produced. Use the official `#NEXAI2026` tag in required public posts.
+The required P0 simulation and real-data integration are implemented. A durable API host, final human team roster, up-to-five-minute demo recording, pitch deck, and LinkedIn/X post links remain. Track ownership and acceptance criteria in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). Optional text-to-SQL, multi-picker congestion, batching, heatmaps, and leaderboards are deferred.
