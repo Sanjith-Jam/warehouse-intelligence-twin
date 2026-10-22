@@ -78,7 +78,7 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Change:** React/Vite/TypeScript/R3F app with original primitive racks/cartons, dock, picker, isometric/top cameras, keyboard-accessible two-slot swapping, demand shading, product search, orders, server-backed original/baseline/player comparison, live replay counters, play/pause/reset, and explicit 6x playback. Offline synthetic preview is visibly labeled and unscored.
 - **Files:** frontend/**, DESIGN.md, THIRD_PARTY_NOTICES.md, README.md, .gitignore.
 - **Branch:** codex/frontend.
-- **Commit / PR:** FRONTEND_PUBLICATION_PENDING.
+- **Commit / PR:** [10e7de6f682469f9364db8bb9ec1fbfa4493c152](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/10e7de6f682469f9364db8bb9ec1fbfa4493c152); PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) (review/merge pending at entry update)..
 - **Validation (Codex rerun):** npm test passed 3/3, 0 failures; npm run build passed TypeScript and Vite 7.3.7 (594 modules), JS 1,172.28 kB / 331.02 kB gzip. Node environment v26.11.1; declared support is >=22.12, not independently tested on that minimum. git diff --check passed.
 - **Browser verification:** Playwright CLI synthetic API fixture passed identical ordered inputs/speed across policies, policy switching, play/pause/reset, stale-result invalidation after swaps, new mapping submission, orders tab, top view, and 390px no-horizontal-overflow check. Fresh synthetic run had 0 console errors/warnings. Reproducible fixture is frontend/checks/browser-contract-check.js. This does not verify AGY backend or real savings.
 - **Offline verification:** Returned browser to unmocked preview; no backend is running locally, so Vite proxy /api/demo returned HTTP 500 and UI accurately displayed backend unavailable, scoring disabled. Screenshot captured outside product repository in task outputs/warehouse-frontend-preview.png.
@@ -124,6 +124,8 @@ Mark each gate PASS / FAIL / PARTIAL / NOT TESTED. Do not mark PASS based on an 
 Add one row when a PR actually exists. Branch names below are anticipated, not proof of branches.
 
 | Planned branch | Scope | Opened PR / URL | Commit | Tests | Codex review | Merge SHA |
+| codex/dev-log | Canonical development log | [#1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/1) | 2432aec | Documentation diff whitespace check passed | Codex merged | eed189f |
+| codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex review complete; merge pending | Pending |
 |---|---|---|---|---|---|---|
 | `agy/01-api-scaffold` | FastAPI `/health`, API skeleton | Not opened | — | — | Pending | — |
 | `agy/02-orders-data` | Retail preprocessing and stable order fixtures | Not opened | — | — | Pending | — |
