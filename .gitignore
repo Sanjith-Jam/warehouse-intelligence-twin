@@ -8,6 +8,7 @@ __pycache__/
 .env.*
 !.env.example
 data/raw/
+.worktrees/
 backend/app/data/uploads/
 data/uploads/
 *.xlsx
