@@ -161,7 +161,7 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 | codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex reviewed and squash-merged | 6089b88 |
 |---|---|---|---|---|---|---|
 | `agy/01-api-scaffold` | FastAPI scaffold, routing, validation | [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3) | 07b32f7 | Codex: 13 passed (0.23s) | Codex verified and squash-merged | 8478dc2 |
-| `agy/02-orders-data` | Authoritative UCI preprocessing, real 100-SKU export, simulation | Pending PR | Pending | 14 passed (0.23s) | Pending | — |
+| `agy/02-orders-data` | Authoritative UCI preprocessing, real 100-SKU export, simulation | [#6](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/6) | 679283e | 14 passed (0.20s) | Pending | — |
 | `agy/03-path-and-slotting` | Aisle routing and three-way replay metrics | Not opened | — | — | Pending | — |
 | `agy/04-analytics-sql` | DuckDB, read-only SQL and query provenance | Not opened | — | — | Pending | — |
 | `agy/05-tests` | Backend tests / demo integrity checks | Not opened | — | — | Pending | — |
@@ -291,8 +291,8 @@ For AI-generated code, record agent/model where known, scope, human inspection p
 - **Change:** Implemented authoritative `scripts/preprocess_retail.py` reproducing the exact preprocessing pipeline from verified workbook SHA256 (`bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`). Exported matching `backend/app/data/demo.json` and `backend/app/data/demo-provenance.json` (June 2011, 100 top SKUs, 20 deterministic orders, 21x21 grid, 100 slots). Updated `DataLoader` to serve real data by default (`real_order_data: True`). Verified deterministic 20-order simulation across original layout (2,844.0m distance, 3,470.0s pick time) and fast-mover baseline layout (2,820.0m distance, 3,450.0s pick time, achieving 24.0m / 0.8% walking reduction). Verified quick tunnel connectivity on Cloudflare.
 - **Files:** `scripts/preprocess_retail.py`, `backend/app/data/demo.json`, `backend/app/data/demo-provenance.json`, `backend/app/data/loader.py`, `tests/test_demo.py`, `tests/test_warehouse.py`, `tests/test_orders.py`, `tests/test_simulate.py`.
 - **Branch:** `agy/02-orders-data`
-- **Commit:** Pending commit
-- **PR:** Pending PR
+- **Commit:** [679283e](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/679283e)
+- **PR:** [#6](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/6)
 - **Validation:** 14/14 pytest unit and integration tests passing in 0.23s. Live curl tests to local and public Cloudflare tunnel endpoints verified 200 OK responses with matching metrics and CORS headers.
 - **Blockers / risks:** None. Replay metrics are computed on synthetic 21x21 warehouse floor with real orders.
 - **Next integration dependency:** Codex reviews and merges PR; connect production Pages frontend to public backend endpoint.
