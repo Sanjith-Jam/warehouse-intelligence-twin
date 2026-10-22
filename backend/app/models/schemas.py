@@ -23,6 +23,7 @@ class ErrorCode(str, Enum):
     LAYOUT_NOT_FOUND = "LAYOUT_NOT_FOUND"
     INVALID_LAYOUT_PERMUTATION = "INVALID_LAYOUT_PERMUTATION"
     LAYOUT_ALREADY_EXISTS = "LAYOUT_ALREADY_EXISTS"
+    IMMUTABLE_DATASET = "IMMUTABLE_DATASET"
 
 
 class ErrorDetail(BaseModel):
@@ -251,6 +252,14 @@ class PreprocessRequest(BaseModel):
     max_orders: int = Field(default=20, ge=1, le=100, description="Maximum number of orders to retain for replay")
     column_mapping: Optional[dict[str, str]] = Field(default=None, description="Optional custom column mapping overrides")
     cell_size_m: float = Field(default=1.5, gt=0, le=10.0, description="Grid cell size in meters")
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_month_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "target_month" not in data and "month" in data:
+                data["target_month"] = data["month"]
+        return data
 
     @field_validator("target_month")
     @classmethod

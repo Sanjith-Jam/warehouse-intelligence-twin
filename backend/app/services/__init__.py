@@ -30,6 +30,16 @@ from backend.app.services.layout_service import (
     LayoutAlreadyExistsError,
 )
 
+from backend.app.services.dataset_store import (
+    get_dataset_detail,
+    preprocess_and_store_dataset,
+    export_dataset,
+    DatasetStoreError,
+    DatasetNotFoundError,
+    DatasetNotPreprocessedError,
+    ImmutableDatasetError,
+)
+
 __all__ = [
     "inspect_uploaded_file",
     "validate_file_content",
@@ -55,4 +65,10 @@ __all__ = [
     "InvalidLayoutPermutationError",
     "ImmutableLayoutError",
     "LayoutAlreadyExistsError",
+    "get_dataset_detail",
+    "preprocess_and_store_dataset",
+    "export_dataset",
+    "DatasetStoreError",
+    "DatasetNotPreprocessedError",
+    "ImmutableDatasetError",
 ]
