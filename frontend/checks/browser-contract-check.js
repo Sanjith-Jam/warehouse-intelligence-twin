@@ -29,6 +29,9 @@ async (page) => {
   await page.getByRole('button',{name:'Pause',exact:true}).waitFor();
   await page.getByRole('button',{name:'Pause',exact:true}).click();
   await page.getByRole('button',{name:'Reset replay',exact:true}).click();
+  await page.getByRole('slider',{name:'Replay position'}).press('End');
+  await page.getByText('Route complete',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Reset replay',exact:true}).click();
   await page.getByRole('button',{name:'S001 Slow item',exact:true}).click();
   await page.getByRole('button',{name:'S002 Fast item',exact:true}).click();
   if(await page.getByRole('button',{name:'Inspect original route'}).count())throw new Error('Stale comparison survived slot swap');
@@ -37,10 +40,10 @@ async (page) => {
   await page.getByRole('button',{name:'Inspect player route'}).waitFor();
   if(calls.length!==6||calls[5].slot_assignments.S001!=='A')throw new Error('Swapped mapping not submitted');
   await page.getByRole('button',{name:'Top view',exact:true}).click();
-  await page.getByRole('button',{name:'Orders',exact:true}).click();
+  await page.getByRole('button',{name:/^Orders/}).click();
   await page.getByText('O1',{exact:true}).waitFor();
   await page.setViewportSize({width:390,height:844});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth);
   if(overflow)throw new Error('Mobile horizontal overflow');
-  return 'PASS: synthetic API contract flow, identical replay inputs, policy switching, pause/reset, swaps clear stale results, new mapping submitted, orders tab, top view, mobile width. Not real backend verification.';
+  return 'PASS: synthetic API contract flow, identical replay inputs, policy switching, pause/reset/seek, swaps clear stale results, new mapping submitted, orders tab, top view, mobile width. Not real backend verification.';
 }

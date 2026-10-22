@@ -11,6 +11,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     if (cause instanceof Error && cause.name === 'TimeoutError') throw new Error('The backend did not respond within 25 seconds.')
     throw new Error('Could not connect to the backend.')
   }
+  if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Simulation API is not configured at this address. Set the public backend URL and retry.')
   if (!response.ok) {
     let reason = `Server returned ${response.status}`
     try {
@@ -19,13 +20,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch { /* Keep status text when the response is not JSON. */ }
     throw new Error(reason)
   }
-  return response.json() as Promise<T>
+  try { return await response.json() as T }
+  catch { throw new Error('The simulation API returned invalid JSON. Retry after checking the backend.') }
 }
 
 export async function loadDemo(): Promise<Demo> {
   const demo = await request<Demo>('/api/demo')
   if (!validateDemo(demo)) throw new Error('The demo response is incomplete or invalid.')
   return demo
+}
+
+export async function loadStaticDemo(): Promise<Demo | null> {
+  const response = await fetch('/demo.json', { signal: AbortSignal.timeout(10000) })
+  if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) return null
+  const demo = await response.json() as Demo
+  return validateDemo(demo) && demo.meta.real_order_data ? demo : null
 }
 
 export async function compare(demo: Demo, assignments: Record<string, string>, speed: number): Promise<Record<Policy, Simulation>> {

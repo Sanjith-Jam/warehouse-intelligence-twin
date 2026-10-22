@@ -10,6 +10,8 @@ npm run dev
 
 Run the backend at `http://localhost:8000`; Vite proxies `/api` in development. For a deployed frontend, set `VITE_API_BASE_URL` to the public backend origin (no trailing slash). Never put API secrets in this variable. `npm test` checks assignment and playback/response rules; `npm run build` checks types and bundles.
 
+If the simulation API is unavailable, the UI remains an unscored floor preview. A verified backend demo export may be placed at `frontend/public/demo.json` to show its real order snapshot in that preview; it must match the `/api/demo` contract and set `meta.real_order_data` to `true`. Comparison remains disabled until the API responds.
+
 Use Node.js 22.12 or newer (the model tests use native TypeScript stripping).
 
 ## Optional browser contract check
@@ -22,4 +24,4 @@ npx --yes @playwright/cli -s=wit run-code --filename checks/browser-contract-che
 npx --yes @playwright/cli -s=wit close
 ```
 
-This injects a tiny, explicitly synthetic API fixture into that isolated browser session. It checks equal replay inputs, layout switching, swaps clearing stale results, play/pause/reset, camera controls, orders, and mobile overflow. It does **not** prove real-data/backend correctness or measured warehouse savings. Close the session afterward to remove its request mocks. Playwright CLI is an optional verification tool, not an app dependency.
+This injects a tiny, explicitly synthetic API fixture into that isolated browser session. It checks equal replay inputs, layout switching, swaps clearing stale results, play/pause/reset/seek, camera controls, orders, and mobile overflow. It does **not** prove real-data/backend correctness or measured warehouse savings. Close the session afterward to remove its request mocks. Playwright CLI is an optional verification tool, not an app dependency.

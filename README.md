@@ -78,3 +78,9 @@ npx -y wrangler@4.151.3 pages deploy dist --project-name warehouse-intelligence-
 ```
 
 Use the same Cloudflare account and set `VITE_API_BASE_URL` to the verified public backend origin before building when available. Credentials remain in the local OAuth store, outside this repository. This is a Direct Upload Pages project; updates use the command above. Switching this project to Git integration later requires a new Pages project, per [Cloudflare Direct Upload documentation](https://developers.cloudflare.com/pages/get-started/direct-upload/).
+
+## Real-data frontend preview
+
+The operations frontend includes a read-only UCI June 2011 export in `frontend/public/demo.json`: 100 real SKUs ranked by picking-line frequency and 20 real selected invoices. `frontend/public/demo-provenance.json` records source hash, filters, actual counts and assumptions. The source month has 36,874 rows; 35,857 positive product lines survive the documented filters; the top 100 account for 8,927 lines across 1,284 invoices. Missing customers are retained for picking; customer identifiers are omitted from the preview.
+
+This static export supports inspection and local slot changes when the API is unavailable; scoring and playback remain disabled until the authoritative matching backend is connected. No savings are claimed from static data. AGY owns the reproducible full-month backend preprocessing milestone. The 21×21 grid, 1.5m cells, 100 racks, aisle geometry, and Random(42) initial slot assignments are synthetic.

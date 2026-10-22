@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { compare, loadDemo } from './api'
+import { compare, loadDemo, loadStaticDemo } from './api'
 import { originalAssignments, samplePlayback, swapAssignments } from './model'
 import { preview } from './preview'
 import { WarehouseScene } from './scene/WarehouseScene'
 import type { Demo, Policy, Simulation } from './types'
 
 const SPEED = 1.2
-const fmt = (n: number, digits = 1) => new Intl.NumberFormat('en', { maximumFractionDigits: digits }).format(n)
+const fmt = (value: number, digits = 1) => new Intl.NumberFormat('en', { maximumFractionDigits: digits }).format(value)
+const clock = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
+const policyLabel: Record<Policy, string> = { original: 'Original', baseline: 'Fast-mover baseline', player: 'Your layout' }
 
 export default function App() {
   const [demo, setDemo] = useState<Demo>(preview)
@@ -19,6 +21,7 @@ export default function App() {
   const [comparing, setComparing] = useState(false)
   const [policy, setPolicy] = useState<Policy>('player')
   const [view, setView] = useState<'iso' | 'top'>('iso')
+  const [cameraReset, setCameraReset] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [query, setQuery] = useState('')
@@ -43,18 +46,14 @@ export default function App() {
       if (token !== refreshId.current) return
       setDemo(next)
       setAssignments(originalAssignments(next))
-      setSelected(null)
-      setComparison(null)
-      setElapsed(0)
-      playbackClock.current = 0
-      setPlaying(false)
       setOffline(false)
     } catch (cause) {
       if (token !== refreshId.current) return
+      const staticDemo = await loadStaticDemo().catch(() => null)
+      if (token !== refreshId.current) return
       setOffline(true)
-      setDemo(preview)
-      setAssignments(originalAssignments(preview))
-      setComparison(null)
+      setDemo(staticDemo ?? preview)
+      setAssignments(originalAssignments(staticDemo ?? preview))
       setError(cause instanceof Error ? cause.message : 'Could not reach the backend.')
     } finally {
       if (token === refreshId.current) setLoading(false)
@@ -83,7 +82,7 @@ export default function App() {
   }
 
   const runComparison = async () => {
-    if (offline || comparing) return
+    if (offline || loading || comparing) return
     const token = ++comparisonId.current
     setComparing(true)
     setComparison(null)
@@ -108,70 +107,71 @@ export default function App() {
   const sample = active ? samplePlayback(active, demo.meta.cell_size_m, elapsed) : null
   const currentRoute = active?.routes.find(route => route.order_id === sample?.order_id) ?? active?.routes[0] ?? null
   const sceneAssignments = active?.slot_assignments ?? assignments
-  const selectedSlot = demo.layout.slots.find(slot => slot.slot_id === selected)
   const productBySku = new Map(demo.products.map(product => [product.sku, product]))
-  const filteredProducts = demo.products.filter(product => `${product.sku} ${product.name}`.toLowerCase().includes(query.toLowerCase()))
-  const productSlot = (sku: string) => Object.entries(assignments).find(([, value]) => value === sku)?.[0]
+  const selectedSlot = demo.layout.slots.find(slot => slot.slot_id === selected)
+  const filteredSlots = demo.layout.slots.filter(slot => `${slot.slot_id} ${assignments[slot.slot_id]} ${productBySku.get(assignments[slot.slot_id])?.name ?? ''}`.toLowerCase().includes(query.toLowerCase()))
   const dirty = demo.layout.slots.some(slot => assignments[slot.slot_id] !== slot.sku)
+  const currentOrderIndex = sample ? demo.orders.findIndex(order => order.order_id === sample.order_id) + 1 : 0
 
   useEffect(() => {
     if (!playing || !active) return
-    const timer = window.setInterval(() => {
-      setElapsed(playbackClock.current)
-    }, 100)
+    const timer = window.setInterval(() => setElapsed(playbackClock.current), 100)
     return () => window.clearInterval(timer)
   }, [playing, active])
-
-  useEffect(() => {
-    if (sample?.done && playing) setPlaying(false)
-  }, [sample?.done, playing])
+  useEffect(() => { if (sample?.done && playing) setPlaying(false) }, [sample?.done, playing])
 
   const changePolicy = (next: Policy) => { setPolicy(next); playbackClock.current = 0; setElapsed(0); setPlaying(false) }
   const resetLayout = () => { if (loading) return; invalidate(); setAssignments(originalAssignments(demo)); setSelected(null) }
+  const resetReplay = () => { setPlaying(false); playbackClock.current = 0; setElapsed(0) }
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><div className="brand-symbol" aria-hidden="true"><span /><span /><span /></div><div><strong>WAREHOUSE<span> / </span>INTELLIGENCE</strong><small>DIGITAL TWIN · SLOT PLANNING</small></div></div>
-      <div className="topbar-right"><span className={`status-dot ${offline ? 'offline' : ''}`} /> <span>{offline ? 'Preview mode' : 'Simulation connected'}</span><span className="top-divider" /> <span className="top-meta">PS 4.2 / OPERATIONS LAB</span></div>
+      <div className="brand"><span className="brand-symbol" aria-hidden="true"><i /><i /><i /></span><div><strong>WAREHOUSE <span>INTELLIGENCE</span></strong><small>DIGITAL TWIN / OPERATIONS</small></div></div>
+      <div className="header-center"><span className="header-label">ACTIVE FLOOR</span><strong>01 / Picking operations</strong></div>
+      <div className="header-status"><span className={`status-dot ${offline ? 'offline' : ''}`} /><span>{offline ? 'Preview mode' : 'Simulation connected'}</span><span className="header-rule" /><span className="header-dataset">{demo.meta.month ?? 'SYNTHETIC'} · {demo.meta.source}</span></div>
     </header>
 
-    <main className="main-content">
-      <section className="intro" aria-labelledby="page-title">
-        <div><p className="eyebrow">WAREHOUSE INTELLIGENCE TWIN <span>—</span> FLOOR 01</p><h1 id="page-title">Plan the floor.<br/><em>Prove the route.</em></h1><p className="intro-copy">Swap products between shelf slots, replay the same orders, and see how walking distance changes.</p></div>
-        <div className="dataset-stamp"><span className="stamp-label">DATA SNAPSHOT</span><strong>{demo.meta.month ?? 'Preview only'}</strong><span>{demo.meta.source}</span><small>{demo.meta.real_order_data ? 'Real retail order lines' : 'Synthetic order fixture'} · Synthetic warehouse geometry</small></div>
-      </section>
+    <main className="console">
+      <div className="console-heading"><div><span className="eyebrow">WORKSPACE / PS 4.2</span><h1>Slotting operations</h1></div><p>Reassign stock. Replay the same orders. Measure each route.</p><span className={`data-badge ${demo.meta.real_order_data ? 'real' : ''}`}>{demo.meta.real_order_data ? 'REAL ORDER SNAPSHOT' : 'SYNTHETIC ORDER FIXTURE'}</span></div>
 
-      {offline && <div className="notice" role="status"><div><strong>Backend unavailable — scene preview only.</strong><span> You can inspect the floor and try swaps. Start the API to calculate routes and compare layouts.</span>{error && <small>Connection: {error}</small>}</div><button className="button outline" onClick={() => void refresh()} disabled={loading}>{loading ? 'Checking…' : 'Retry connection'}</button></div>}
+      {offline && <div className="notice" role="status"><div><strong>Backend not connected. Scene preview only.</strong><span>Slot changes are local; comparison needs the simulation API.</span>{error && <small>{error}</small>}</div><button className="button outline" onClick={() => void refresh()} disabled={loading}>{loading ? 'Checking…' : 'Retry connection'}</button></div>}
       {!offline && error && <div className="notice error" role="alert"><span>{error}</span><button className="button outline" onClick={() => setError('')}>Dismiss</button></div>}
+
+      <section className="comparison-strip" aria-label="Layout comparison">
+        {(['original', 'baseline', 'player'] as const).map(item => {
+          const result = comparison?.[item]
+          return <article className={`comparison-card ${comparison && policy === item ? 'current' : ''}`} key={item}>
+            <div className="comparison-title"><span className="comparison-marker" /><span>{policyLabel[item]}</span>{comparison && <button onClick={() => changePolicy(item)} aria-label={`Inspect ${item} route`} aria-pressed={policy === item}>Inspect route ↗</button>}</div>
+            <div className="comparison-value"><strong>{result ? fmt(result.distance_m) : '—'}</strong><span>m walked</span></div>
+            <p>{result ? `${fmt(result.average_pick_time_s)} s / order average` : 'Awaiting simulation'}</p>
+          </article>
+        })}
+        <div className="comparison-context"><strong>{demo.orders.length}</strong><span>ORDERS<br/>IN REPLAY</span><strong>{demo.layout.slots.length}</strong><span>ACTIVE<br/>SLOTS</span></div>
+      </section>
 
       <div className="workspace-grid">
         <section className="floor-card" aria-labelledby="floor-title">
-          <div className="panel-heading"><div><span className="section-index">01 / FLOOR VIEW</span><h2 id="floor-title">Picking floor</h2></div><div className="view-control" aria-label="Camera view"><button className={view === 'iso' ? 'active' : ''} onClick={() => setView('iso')} aria-pressed={view === 'iso'}>Isometric</button><button className={view === 'top' ? 'active' : ''} onClick={() => setView('top')} aria-pressed={view === 'top'}>Top view</button></div></div>
-          <div className="scene-frame"><WarehouseScene demo={demo} assignments={sceneAssignments} selected={selected} onSelect={chooseSlot} view={view} route={currentRoute} simulation={active ?? null} playbackClock={playbackClock} playing={playing} activeSku={sample?.sku ?? null} /><div className="scene-overlay"><span><i className="legend-rack" /> HIGH PICK RATE</span><span><i className="legend-path" /> ROUTE</span><span><i className="legend-dock" /> DOCK</span></div><div className="scene-corner">DRAG TO ORBIT · SCROLL TO ZOOM</div></div>
-          <div className="floor-footer"><p><strong>{demo.layout.slots.length} shelf slots</strong><span> · Select two racks to swap their products.</span></p><span>1 CELL = {fmt(demo.meta.cell_size_m)} M</span></div>
+          <div className="floor-toolbar"><div><span className="section-index">WAREHOUSE / SPATIAL VIEW</span><h2 id="floor-title">Picking floor <span>· {demo.layout.width} × {demo.layout.height} grid</span></h2></div><div className="floor-tools"><div className="view-control" role="group" aria-label="Camera view"><button className={view === 'iso' ? 'active' : ''} onClick={() => setView('iso')} aria-pressed={view === 'iso'}>Isometric</button><button className={view === 'top' ? 'active' : ''} onClick={() => setView('top')} aria-pressed={view === 'top'}>Top view</button></div><button className="icon-button" onClick={() => setCameraReset(value => value + 1)} aria-label="Reset camera" title="Reset camera">⌖</button></div></div>
+          <div className="scene-frame"><WarehouseScene demo={demo} assignments={sceneAssignments} selected={selected} onSelect={chooseSlot} view={view} cameraReset={cameraReset} route={currentRoute} simulation={active ?? null} playbackClock={playbackClock} playing={playing} activeSku={sample?.sku ?? null} /><div className="scene-hud"><span className="hud-live"><i /> {offline ? 'FLOOR PREVIEW' : 'SIMULATED FLOOR'}</span><span>{demo.meta.synthetic_warehouse ? 'SYNTHETIC GEOMETRY' : 'WAREHOUSE GEOMETRY'}</span></div><div className="scene-legend"><span><i className="legend-rack" /> HIGH PICK RATE</span><span><i className="legend-path" /> PICK ROUTE</span><span><i className="legend-dock" /> DOCK</span></div><div className="scene-hint">DRAG TO ORBIT / SCROLL TO ZOOM</div></div>
+          <div className="playback-console"><div className="playback-top"><div className="playback-state"><span className="section-index">PICKER REPLAY <b>· 6× VIEW SPEED</b></span><strong>{active ? sample?.handling ? `Handling ${sample.sku}` : sample?.done ? 'Route complete' : `Walking · ${sample?.order_id}` : 'Run a comparison to inspect a route'}</strong></div><div className="playback-live"><span>ORDER <b>{currentOrderIndex || '—'} / {demo.orders.length}</b></span><span>DISTANCE <b>{active ? `${fmt(sample?.distance_m ?? 0)} / ${fmt(active.distance_m)} m` : '—'}</b></span><span>TIME <b>{active ? `${clock(sample?.time_s ?? 0)} / ${clock(active.estimated_pick_time_s)}` : '—'}</b></span></div></div>
+            <div className="timeline"><label htmlFor="route-position">Route timeline</label><input id="route-position" aria-label="Replay position" type="range" min="0" max={active?.estimated_pick_time_s ?? 1} step="0.1" value={Math.min(elapsed, active?.estimated_pick_time_s ?? 1)} disabled={!active} onChange={event => { const next = Number(event.target.value); setPlaying(false); playbackClock.current = next; setElapsed(next) }} /><span>{active ? `${Math.round(elapsed / active.estimated_pick_time_s * 100)}%` : '0%'}</span></div>
+            <div className="playback-actions"><span>{active ? `${policyLabel[policy]} · ${active.routes.length} returned routes` : 'Routes follow walkable aisle cells and return to dock.'}</span><div><button className="button outline" disabled={!active} onClick={() => { if (sample?.done) { playbackClock.current = 0; setElapsed(0) } else if (playing) setElapsed(playbackClock.current); setPlaying(!playing) }}>{playing ? 'Pause' : sample?.done ? 'Replay' : 'Play'}</button><button className="button subtle" disabled={!active} onClick={resetReplay}>Reset replay</button></div></div>
+          </div>
         </section>
 
-        <aside className="side-stack">
-          <section className="control-card" aria-labelledby="slot-title"><span className="section-index">02 / SLOT PLANNING</span><h2 id="slot-title">Reassign stock</h2><p className="muted">Choose two occupied slots. The products exchange places; routes update when you compare.</p>
-            <div className="selected-readout"><span>FIRST SLOT</span><strong>{selected ?? 'Select a slot'}</strong><small>{selectedSlot ? `${assignments[selectedSlot.slot_id]} · ${productBySku.get(assignments[selectedSlot.slot_id])?.name ?? 'Product'}` : 'Select from the floor or list below'}</small></div>
-            <div className="slot-grid" aria-label="Shelf slots">{demo.layout.slots.map(slot => <button key={slot.slot_id} className={`slot-button ${selected === slot.slot_id ? 'selected' : ''} ${assignments[slot.slot_id] !== slot.sku ? 'changed' : ''}`} onClick={() => chooseSlot(slot.slot_id)} disabled={loading} aria-pressed={selected === slot.slot_id} title={`${slot.slot_id}: ${productBySku.get(assignments[slot.slot_id])?.name ?? assignments[slot.slot_id]}`}><strong>{slot.slot_id}</strong><span>{productBySku.get(assignments[slot.slot_id])?.name ?? assignments[slot.slot_id]}</span></button>)}</div>
-            <div className="control-actions"><button className="button primary" onClick={() => void runComparison()} disabled={offline || loading || comparing} aria-busy={comparing}>{comparing ? 'Calculating routes…' : 'Replay & compare'}</button><button className="button quiet" onClick={resetLayout} disabled={loading || (!dirty && !comparison)}>Reset layout</button></div>
-            <small className="control-hint">{dirty ? 'Layout modified · comparison needed' : 'Original slot arrangement'}{offline ? ' · API required for scoring' : ''}</small>
-          </section>
+        <aside className="planning-rail" aria-label="Slot planning controls">
+          <div className="rail-heading"><div><span className="section-index">SLOT PLANNER</span><h2>Move the fast movers.</h2></div><p>Choose two occupied locations to swap their products.</p></div>
+          <div className="selected-readout"><span>SELECTED LOCATION</span><strong>{selected ?? 'No slot selected'}</strong><small>{selectedSlot ? `${assignments[selectedSlot.slot_id]} · ${productBySku.get(assignments[selectedSlot.slot_id])?.name ?? 'Product'}` : 'Select from the floor or stock list'}</small></div>
+          <div className="rail-actions"><button className="button primary" onClick={() => void runComparison()} disabled={offline || loading || comparing} aria-busy={comparing}>{comparing ? 'Calculating routes…' : 'Replay & compare'}</button><button className="button subtle" onClick={resetLayout} disabled={loading || (!dirty && !comparison)}>Reset layout</button></div>
+          <p className="rail-state"><i className={dirty ? 'modified' : ''} /> {dirty ? 'Layout modified · compare to score' : 'Original slot arrangement'}{offline ? ' · API required' : ''}</p>
+          <div className="rail-tabs" role="group" aria-label="Inventory view"><button onClick={() => setTab('products')} aria-pressed={tab === 'products'}>Products <span>{demo.products.length}</span></button><button onClick={() => setTab('orders')} aria-pressed={tab === 'orders'}>Orders <span>{demo.orders.length}</span></button></div>
+          {tab === 'products' ? <div className="rail-list-section"><label className="search-label" htmlFor="stock-search">FIND PRODUCT OR SLOT</label><input id="stock-search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search SKU, name, slot…" /><div className="rail-list" aria-label="Shelf slots">{filteredSlots.map(slot => { const product = productBySku.get(assignments[slot.slot_id]); return <button key={slot.slot_id} className={`stock-row ${selected === slot.slot_id ? 'selected' : ''} ${assignments[slot.slot_id] !== slot.sku ? 'changed' : ''}`} aria-label={`${slot.slot_id} ${product?.name ?? assignments[slot.slot_id]}`} aria-pressed={selected === slot.slot_id} disabled={loading} onClick={() => chooseSlot(slot.slot_id)}><span className="stock-code">{slot.slot_id}</span><span className="stock-detail"><strong>{product?.name ?? assignments[slot.slot_id]}</strong><small>{assignments[slot.slot_id]}</small></span><span className="stock-picks">{fmt(product?.pick_frequency ?? 0, 0)}<small>picks</small></span></button> })}{filteredSlots.length === 0 && <p className="empty-state">No stock matches “{query}”.</p>}</div></div> : <div className="rail-list orders-list">{demo.orders.map(order => <article key={order.order_id}><div><strong>{order.order_id}</strong><span>{order.lines.length} lines</span></div><p>{order.lines.map(line => `${line.sku} × ${line.quantity}`).join(' · ')}</p></article>)}</div>}
+          <div className="rail-foot">MONTHLY PICK RATE · {demo.meta.real_order_data ? 'RETAINED UCI ORDER LINES' : 'SYNTHETIC PREVIEW VALUES'}</div>
         </aside>
       </div>
 
-      <section className="results-section" aria-labelledby="results-title"><div className="section-header"><div><span className="section-index">03 / REPLAY & COMPARE</span><h2 id="results-title">One order set. Three layouts.</h2></div><span className="section-note">{demo.orders.length} orders · {fmt(SPEED)} m/s · same routing rules</span></div>
-        <div className="metric-grid">{(['original', 'baseline', 'player'] as const).map(item => { const result = comparison?.[item]; return <article key={item} className={`metric-card ${item === policy && comparison ? 'focused' : ''}`}><div className="metric-card-top"><span>{item === 'original' ? 'ORIGINAL' : item === 'baseline' ? 'FAST-MOVER BASELINE' : 'YOUR LAYOUT'}</span>{comparison && <button onClick={() => changePolicy(item)} aria-label={`Inspect ${item} route`} aria-pressed={policy === item}>VIEW ROUTE ↗</button>}</div><strong>{result ? fmt(result.distance_m) : '—'} <small>{result ? 'm walked' : ''}</small></strong><div className="metric-footer"><span>Average pick time</span><b>{result ? `${fmt(result.average_pick_time_s)} s / order` : 'Awaiting simulation'}</b></div></article> })}</div>
-        <div className="replay-strip"><div className="replay-info"><span className="live-indicator" /> <div><strong>{active ? sample?.handling ? `Handling ${sample.sku}` : sample?.done ? 'Replay complete' : `Walking · ${sample?.order_id}` : 'Replay ready when comparison finishes'}</strong><small>{active ? `${fmt(sample?.distance_m ?? 0)} / ${fmt(active.distance_m)} m walked · ${fmt(sample?.time_s ?? 0)} / ${fmt(active.estimated_pick_time_s)} s elapsed · 6× playback` : 'Server routes and metrics appear here.'}</small></div></div><div className="replay-actions"><button className="button outline" disabled={!active} onClick={() => { if (sample?.done) { playbackClock.current = 0; setElapsed(0) } setPlaying(!playing) }}>{playing ? 'Pause' : sample?.done ? 'Replay' : 'Play'}</button><button className="button quiet" disabled={!active} onClick={() => { setPlaying(false); playbackClock.current = 0; setElapsed(0) }}>Reset replay</button></div></div>
-        {active?.warnings.length ? <p className="warning-note" role="status">{active.warnings.join(' · ')}</p> : null}
-        {comparison && <p className="provenance-note">Results use server-returned routes and assignments for dataset <strong>{demo.meta.dataset_id}</strong>. Estimated time includes {fmt(active?.assumptions.handling_seconds_per_line ?? 0)} s handling per line.</p>}
-      </section>
-
-      <section className="inventory-section" aria-labelledby="inventory-title"><div className="section-header"><div><span className="section-index">04 / ORDER SNAPSHOT</span><h2 id="inventory-title">The stock behind the floor.</h2></div><div className="tabs" role="group" aria-label="Inventory view"><button onClick={() => setTab('products')} aria-pressed={tab === 'products'}>Products</button><button onClick={() => setTab('orders')} aria-pressed={tab === 'orders'}>Orders</button></div></div>
-        {tab === 'products' ? <><label className="search-label">Find a product <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by name or SKU" /></label><div className="table-wrap"><table><caption>Products in the demo snapshot and current shelf assignment</caption><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Monthly picks</th><th scope="col">Current slot</th><th scope="col">Action</th></tr></thead><tbody>{filteredProducts.map(product => { const slot = productSlot(product.sku); return <tr key={product.sku}><td><strong>{product.name}</strong></td><td className="mono">{product.sku}</td><td>{fmt(product.pick_frequency, 0)}</td><td className="mono">{slot ?? '—'}</td><td><button className="table-action" disabled={!slot} onClick={() => slot && chooseSlot(slot)}>{selected && selected !== slot ? 'Swap here' : selected === slot ? 'Clear' : 'Select slot'}</button></td></tr> })}</tbody></table>{filteredProducts.length === 0 && <p className="empty-state">No products match “{query}”.</p>}</div></> : <div className="orders-list">{demo.orders.map(order => <article key={order.order_id}><strong className="mono">{order.order_id}</strong><span>{order.lines.length} product lines</span><small>{order.lines.map(line => `${line.sku} × ${line.quantity}`).join(' · ')}</small></article>)}</div>}
-      </section>
+      <div className="console-footer"><span>DATASET {demo.meta.dataset_id}</span><span>{demo.meta.real_order_data ? 'UCI ONLINE RETAIL II ORDERS' : 'SYNTHETIC FIXTURE · NO MEASURED KPIs'}</span><span>1 CELL = {fmt(demo.meta.cell_size_m)} M · SPEED {fmt(SPEED)} M/S · HANDLING 10 S/LINE</span></div>
+      {active?.warnings.length ? <p className="warning-note" role="status">{active.warnings.join(' · ')}</p> : null}
     </main>
-    <footer className="footer"><span>WAREHOUSE INTELLIGENCE TWIN</span><span>{demo.meta.real_order_data ? 'UCI Online Retail II order snapshot' : 'Synthetic fixture · no measured KPIs'} / Synthetic floor and movement assumptions</span></footer>
   </div>
 }
