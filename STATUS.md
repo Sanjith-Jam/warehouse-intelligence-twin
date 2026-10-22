@@ -13,9 +13,12 @@
 
 ## Availability and remaining work
 
-- The Pages frontend is public. Its backend URL is a Cloudflare Quick Tunnel that relies on running local `uvicorn` and `cloudflared` processes. Those processes were alive at the latest check, but their hostname and uptime are not durable.
-- `scripts/preprocess_retail.py` currently has a machine-specific default workbook path; use `--input` explicitly or fix portability before treating the default command as reproducible on another checkout.
+- The Pages frontend is public. Its backend URL is currently bridged via a Cloudflare Quick Tunnel while local `uvicorn` and `cloudflared` run. For permanent hosting without local processes, follow [`backend/DEPLOYMENT.md`](backend/DEPLOYMENT.md) for Cloudflare Named Tunnel or Render/Railway/Docker deployment.
+- `scripts/preprocess_retail.py` is now fully portable: searches `--input`, `UCI_DATASET_PATH`, or standard candidate paths, reporting actionable download instructions and expected SHA256 (`bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`) if missing.
+- Backend and frontend fixtures (`demo.json` and `demo-provenance.json`) are verified byte-identical by automated regression tests in `tests/test_preprocess.py`.
 - Final human team roster, demo recording, pitch deck, and LinkedIn/X post links are not in the repository.
 - Optional text-to-SQL and stretch goals are deferred.
 
-Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Codex retains frontend and Git merge authority; AGY remains the backend/data owner and should use small PRs for remaining backend work.
+Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Codex retains frontend and Git merge authority; AGY remains the backend/data owner and uses small PRs for remaining backend work.
+
+[AGY] branch=agy/05-portable-preprocessing status=done files=scripts/preprocess_retail.py,tests/test_preprocess.py,backend/DEPLOYMENT.md,Dockerfile,Procfile,requirements.txt tests=19 passed in 0.33s (pytest), 3 passed (frontend) needs=Codex review and merge of PR next=submission video & deck

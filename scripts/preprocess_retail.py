@@ -239,8 +239,9 @@ def preprocess_retail_month(
     }
 
     provenance = {
-        "purpose": "Authoritative real-data export for Warehouse Intelligence Twin simulation.",
+        "purpose": "Authoritative shared June 2011 UCI order snapshot used by the frontend and backend simulation.",
         "source_url": "https://archive.ics.uci.edu/dataset/502/online+retail+ii",
+        "download_url": "https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip",
         "citation": "Chen, D. (2012), Online Retail II, DOI 10.24432/C5CG6D",
         "license": "CC BY 4.0",
         "workbook_sha256": sha256,
@@ -261,10 +262,62 @@ def preprocess_retail_month(
         "selected_order_count": len(orders),
         "selected_order_ids": [o["order_id"] for o in orders],
         "selection": f"First {len(orders)} invoices by first retained line timestamp, stable source row order; each order restricted to top 100 SKUs.",
+        "missing_customers": "Retained for picking; customer identifiers are not included in the public snapshot.",
         "warehouse": "Synthetic 21x21 grid, 1.5m cells, 100 fixed racks, 341 walkable cells, dock[0,0]; slot assignments seeded with Python Random(42).",
+        "metrics": "This data export contains no route metrics; distance and time are returned by the backend simulation.",
     }
 
     return demo_payload, provenance
+
+
+def resolve_input_path(input_arg: str | None) -> tuple[Path | None, str]:
+    """
+    Resolve input workbook path from explicit argument, environment variable,
+    or standard candidate locations in the repository.
+    Returns (resolved_path, search_description).
+    """
+    if input_arg:
+        p = Path(input_arg).expanduser()
+        if p.is_file():
+            return p, f"explicit argument '{input_arg}'"
+        return None, f"specified path '{input_arg}'"
+
+    # Check environment variable
+    env_path = os.getenv("UCI_DATASET_PATH")
+    if env_path:
+        p = Path(env_path).expanduser()
+        if p.is_file():
+            return p, f"environment variable UCI_DATASET_PATH ('{env_path}')"
+        return None, f"environment variable UCI_DATASET_PATH ('{env_path}')"
+
+    # Check standard relative candidate locations
+    candidates = [
+        Path("datasets/online-retail-ii/online_retail_II.xlsx"),
+        Path("datasets/online_retail_II.xlsx"),
+        Path("data/online_retail_II.xlsx"),
+        Path("online_retail_II.xlsx"),
+    ]
+    for c in candidates:
+        if c.is_file():
+            return c, f"standard repository path '{c}'"
+
+    return None, "standard locations [datasets/, data/, ./online_retail_II.xlsx] or UCI_DATASET_PATH"
+
+
+def print_missing_dataset_error(attempted_desc: str):
+    """Print actionable error message with download instructions and SHA256 checksum."""
+    msg = (
+        f"Error: UCI Online Retail II dataset workbook not found via {attempted_desc}.\n\n"
+        "To obtain the dataset:\n"
+        "  1. Download online_retail_II.xlsx from the UCI Machine Learning Repository:\n"
+        "     https://archive.ics.uci.edu/dataset/502/online+retail+ii\n"
+        f"  2. Expected SHA-256 checksum: {EXPECTED_SHA256}\n\n"
+        "Usage:\n"
+        "  python scripts/preprocess_retail.py --input /path/to/online_retail_II.xlsx\n"
+        "Or set the environment variable:\n"
+        "  export UCI_DATASET_PATH=/path/to/online_retail_II.xlsx\n"
+    )
+    print(msg, file=sys.stderr)
 
 
 def main():
@@ -272,8 +325,8 @@ def main():
     parser.add_argument(
         "--input",
         type=str,
-        default="/home/bread/Documents/Codex/2026-10-22/you-are-the-technical-lead-github/work/datasets/online-retail-ii/online_retail_II.xlsx",
-        help="Path to online_retail_II.xlsx",
+        default=None,
+        help="Path to online_retail_II.xlsx (default: checks UCI_DATASET_PATH and standard repo locations)",
     )
     parser.add_argument("--sheet", type=str, default="Year 2010-2011")
     parser.add_argument("--month", type=str, default="2011-06")
@@ -291,14 +344,29 @@ def main():
         default="backend/app/data/demo-provenance.json",
         help="Output path for provenance JSON",
     )
+    parser.add_argument(
+        "--sync-frontend",
+        action="store_true",
+        default=True,
+        help="Also copy output files to frontend/public/ to guarantee byte identity (default: True)",
+    )
+    parser.add_argument(
+        "--no-sync-frontend",
+        dest="sync_frontend",
+        action="store_false",
+        help="Do not copy output files to frontend/public/",
+    )
     args = parser.parse_args()
 
-    if not os.path.exists(args.input):
-        print(f"Error: Dataset not found at {args.input}", file=sys.stderr)
+    resolved_path, desc = resolve_input_path(args.input)
+    if not resolved_path:
+        print_missing_dataset_error(desc)
         sys.exit(1)
 
+    print(f"Using dataset workbook from {desc}: {resolved_path}")
+
     demo, prov = preprocess_retail_month(
-        filepath=args.input,
+        filepath=str(resolved_path),
         sheet_name=args.sheet,
         target_month=args.month,
         num_top_skus=args.top_skus,
@@ -316,6 +384,16 @@ def main():
     with open(out_prov, "w", encoding="utf-8") as f:
         json.dump(prov, f, indent=2)
     print(f"Wrote provenance metadata to {out_prov}")
+
+    if args.sync_frontend:
+        frontend_json = Path("frontend/public/demo.json")
+        frontend_prov = Path("frontend/public/demo-provenance.json")
+        if frontend_json.parent.exists():
+            with open(frontend_json, "w", encoding="utf-8") as f:
+                json.dump(demo, f, indent=2)
+            with open(frontend_prov, "w", encoding="utf-8") as f:
+                json.dump(prov, f, indent=2)
+            print("Synchronized snapshots with frontend/public/demo.json and demo-provenance.json")
 
 
 if __name__ == "__main__":
