@@ -1,5 +1,6 @@
 """Application configuration settings."""
 import os
+from pathlib import Path
 from pydantic import BaseModel
 
 
@@ -20,6 +21,11 @@ class Settings(BaseModel):
     handling_seconds_per_line: float = 10.0
     default_speed_mps: float = 1.2
     max_speed_mps: float = 10.0
+    max_upload_size_bytes: int = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(50 * 1024 * 1024)))
+    upload_storage_dir: str = os.getenv(
+        "UPLOAD_STORAGE_DIR",
+        str(Path(__file__).resolve().parent / "data" / "uploads"),
+    )
 
 
 settings = Settings()
