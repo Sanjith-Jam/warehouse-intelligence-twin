@@ -16,8 +16,10 @@ from pathlib import Path
 from typing import Any
 
 EXPECTED_SHA256 = "bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980"
+UCI_PAGE_URL = "https://archive.ics.uci.edu/dataset/502/online+retail+ii"
+UCI_DOWNLOAD_URL = "https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip"
 
-EXCLUDED_NONPRODUCT_CODES = {
+EXCLUDED_NONPRODUCT_CODES = [
     "POST",
     "DOT",
     "M",
@@ -34,7 +36,7 @@ EXCLUDED_NONPRODUCT_CODES = {
     "TEST001",
     "TEST002",
     "SAMPLES",
-}
+]
 
 
 def compute_sha256(filepath: str) -> str:
@@ -44,6 +46,26 @@ def compute_sha256(filepath: str) -> str:
         while chunk := f.read(1024 * 1024):
             h.update(chunk)
     return h.hexdigest()
+
+
+def validate_workbook_checksum(filepath: str | Path, allow_mismatch: bool = False) -> str:
+    """Verify workbook SHA-256 against expected official hash."""
+    sha256 = compute_sha256(str(filepath))
+    if sha256 != EXPECTED_SHA256:
+        msg = (
+            f"Error: Source workbook SHA-256 checksum mismatch!\n"
+            f"  File:     {filepath}\n"
+            f"  Expected: {EXPECTED_SHA256}\n"
+            f"  Actual:   {sha256}\n\n"
+            f"Official source: {UCI_PAGE_URL}\n"
+            "If using an intentional variation or test fixture, pass --allow-hash-mismatch."
+        )
+        if not allow_mismatch:
+            print(msg, file=sys.stderr)
+            sys.exit(1)
+        else:
+            print(f"Warning: SHA-256 mismatch ignored due to --allow-hash-mismatch:\n  {sha256}", file=sys.stderr)
+    return sha256
 
 
 def generate_synthetic_21x21_layout(top_skus: list[str]) -> dict[str, Any]:
@@ -77,7 +99,7 @@ def generate_synthetic_21x21_layout(top_skus: list[str]) -> dict[str, Any]:
     for z in [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]:
         for x in [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]:
             slot_id = f"S{slot_index:03d}"
-            sku = shuffled_skus[slot_index - 1]
+            sku = shuffled_skus[slot_index - 1] if slot_index - 1 < len(shuffled_skus) else f"EMPTY_{slot_index:03d}"
             slots.append({
                 "slot_id": slot_id,
                 "rack_cell": [x, z],
@@ -102,6 +124,7 @@ def preprocess_retail_month(
     target_month: str = "2011-06",
     num_top_skus: int = 100,
     num_demo_orders: int = 20,
+    allow_hash_mismatch: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """
     Load workbook, filter month, compute pick frequencies, select top SKUs,
@@ -109,7 +132,7 @@ def preprocess_retail_month(
     """
     import pandas as pd
 
-    sha256 = compute_sha256(filepath)
+    sha256 = validate_workbook_checksum(filepath, allow_mismatch=allow_hash_mismatch)
     print(f"Loaded file {filepath} (SHA256: {sha256})")
 
     df = pd.read_excel(filepath, sheet_name=sheet_name)
@@ -153,10 +176,11 @@ def preprocess_retail_month(
     nonpos_qty_count = int(is_nonpos_qty.sum())
 
     month_df["StockCodeClean"] = month_df["StockCode"].astype(str).str.strip().str.upper()
+    excluded_set = set(EXCLUDED_NONPRODUCT_CODES)
     is_blank_or_nonproduct = (
         month_df["StockCode"].isna()
         | (month_df["StockCodeClean"] == "")
-        | (month_df["StockCodeClean"].isin(EXCLUDED_NONPRODUCT_CODES))
+        | (month_df["StockCodeClean"].isin(excluded_set))
     )
     nonproduct_count = int(is_blank_or_nonproduct.sum())
 
@@ -169,10 +193,11 @@ def preprocess_retail_month(
 
     # Compute pick frequency: count of picking lines per SKU (NOT sum of units)
     sku_freq = valid_df.groupby("StockCodeClean").size()
-    # Most common description for each SKU
+    # First observed non-null description for each SKU in stable source row order
     sku_desc = (
-        valid_df.groupby("StockCodeClean")["Description"]
-        .agg(lambda s: s.mode().iloc[0] if not s.empty and not pd.isna(s.mode().iloc[0]) else "Product")
+        valid_df.dropna(subset=["Description"])
+        .groupby("StockCodeClean", sort=False)["Description"]
+        .first()
         .to_dict()
     )
 
@@ -198,20 +223,18 @@ def preprocess_retail_month(
     top_sku_lines = len(top_df)
     top_sku_invoices = top_df["Invoice"].nunique()
 
-    # Extract first N orders in stable order of appearance (first line timestamp)
-    order_first_ts = top_df.groupby("Invoice")["InvoiceDate"].min().sort_values()
-    selected_invoice_ids = order_first_ts.index.tolist()[:num_demo_orders]
+    # Extract first N orders in stable order of appearance (first line timestamp, tie-broken by source row order)
+    order_first_ts = top_df.groupby("Invoice", sort=False)["InvoiceDate"].min().sort_values(kind="stable")
+    selected_invoice_ids = [str(inv) for inv in order_first_ts.index.tolist()[:num_demo_orders]]
 
     orders: list[dict[str, Any]] = []
     for inv in selected_invoice_ids:
-        inv_lines = top_df[top_df["Invoice"] == inv]
+        inv_lines = top_df[top_df["Invoice"].astype(str) == str(inv)]
         # Aggregate quantity per SKU within the order if repeated
-        line_items: list[dict[str, Any]] = []
-        for sku, group in inv_lines.groupby("StockCodeClean", sort=False):
-            line_items.append({
-                "sku": sku,
-                "quantity": int(group["Quantity"].sum()),
-            })
+        line_items = [
+            {"sku": str(row.StockCodeClean), "quantity": int(row.Quantity)}
+            for row in inv_lines.itertuples()
+        ]
         if line_items:
             orders.append({
                 "order_id": str(inv),
@@ -240,8 +263,8 @@ def preprocess_retail_month(
 
     provenance = {
         "purpose": "Authoritative shared June 2011 UCI order snapshot used by the frontend and backend simulation.",
-        "source_url": "https://archive.ics.uci.edu/dataset/502/online+retail+ii",
-        "download_url": "https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip",
+        "source_url": UCI_PAGE_URL,
+        "download_url": UCI_DOWNLOAD_URL,
         "citation": "Chen, D. (2012), Online Retail II, DOI 10.24432/C5CG6D",
         "license": "CC BY 4.0",
         "workbook_sha256": sha256,
@@ -253,7 +276,7 @@ def preprocess_retail_month(
         "nonpositive_or_missing_quantity_rows": nonpos_qty_count,
         "nonproduct_or_blank_sku_rows": nonproduct_count,
         "filter_counts_overlap": True,
-        "excluded_nonproduct_codes": sorted(list(EXCLUDED_NONPRODUCT_CODES)),
+        "excluded_nonproduct_codes": list(EXCLUDED_NONPRODUCT_CODES),
         "valid_positive_product_lines": valid_lines,
         "top_sku_count": len(top_100_skus),
         "pick_frequency_definition": "Number of retained positive picking lines per SKU in the complete month; not units.",
@@ -310,7 +333,8 @@ def print_missing_dataset_error(attempted_desc: str):
         f"Error: UCI Online Retail II dataset workbook not found via {attempted_desc}.\n\n"
         "To obtain the dataset:\n"
         "  1. Download online_retail_II.xlsx from the UCI Machine Learning Repository:\n"
-        "     https://archive.ics.uci.edu/dataset/502/online+retail+ii\n"
+        f"     {UCI_PAGE_URL}\n"
+        f"     Direct download: {UCI_DOWNLOAD_URL}\n"
         f"  2. Expected SHA-256 checksum: {EXPECTED_SHA256}\n\n"
         "Usage:\n"
         "  python scripts/preprocess_retail.py --input /path/to/online_retail_II.xlsx\n"
@@ -327,6 +351,12 @@ def main():
         type=str,
         default=None,
         help="Path to online_retail_II.xlsx (default: checks UCI_DATASET_PATH and standard repo locations)",
+    )
+    parser.add_argument(
+        "--allow-hash-mismatch",
+        action="store_true",
+        default=False,
+        help="Allow processing even if workbook SHA-256 does not match official UCI checksum",
     )
     parser.add_argument("--sheet", type=str, default="Year 2010-2011")
     parser.add_argument("--month", type=str, default="2011-06")
@@ -348,13 +378,13 @@ def main():
         "--sync-frontend",
         action="store_true",
         default=True,
-        help="Also copy output files to frontend/public/ to guarantee byte identity (default: True)",
+        help="Also write preprocessed outputs to frontend/public/ (default: True)",
     )
     parser.add_argument(
         "--no-sync-frontend",
         dest="sync_frontend",
         action="store_false",
-        help="Do not copy output files to frontend/public/",
+        help="Do not copy preprocessed outputs to frontend/public/",
     )
     args = parser.parse_args()
 
@@ -371,18 +401,21 @@ def main():
         target_month=args.month,
         num_top_skus=args.top_skus,
         num_demo_orders=args.orders,
+        allow_hash_mismatch=args.allow_hash_mismatch,
     )
 
     out_json = Path(args.output_json)
     out_json.parent.mkdir(parents=True, exist_ok=True)
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(demo, f, indent=2)
+        json.dump(demo, f, separators=(",", ":"))
+        f.write("\n")
     print(f"Wrote preprocessed snapshot to {out_json}")
 
     out_prov = Path(args.output_provenance)
     out_prov.parent.mkdir(parents=True, exist_ok=True)
     with open(out_prov, "w", encoding="utf-8") as f:
         json.dump(prov, f, indent=2)
+        f.write("\n")
     print(f"Wrote provenance metadata to {out_prov}")
 
     if args.sync_frontend:
@@ -390,10 +423,12 @@ def main():
         frontend_prov = Path("frontend/public/demo-provenance.json")
         if frontend_json.parent.exists():
             with open(frontend_json, "w", encoding="utf-8") as f:
-                json.dump(demo, f, indent=2)
+                json.dump(demo, f, separators=(",", ":"))
+                f.write("\n")
             with open(frontend_prov, "w", encoding="utf-8") as f:
                 json.dump(prov, f, indent=2)
-            print("Synchronized snapshots with frontend/public/demo.json and demo-provenance.json")
+                f.write("\n")
+            print("Synchronized preprocessed files to frontend/public/")
 
 
 if __name__ == "__main__":
