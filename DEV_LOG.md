@@ -161,7 +161,7 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 | codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex reviewed and squash-merged | 6089b88 |
 |---|---|---|---|---|---|---|
 | `agy/01-api-scaffold` | FastAPI scaffold, routing, validation | [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3) | 07b32f7 | Codex: 13 passed (0.23s) | Codex verified and squash-merged | 8478dc2 |
-| `agy/02-orders-data` | Retail preprocessing and stable order fixtures | Not opened | — | — | Pending | — |
+| `agy/02-orders-data` | Authoritative UCI preprocessing, real 100-SKU export, simulation | [#6](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/6) | 679283e | 14 passed (0.20s) | Pending | — |
 | `agy/03-path-and-slotting` | Aisle routing and three-way replay metrics | Not opened | — | — | Pending | — |
 | `agy/04-analytics-sql` | DuckDB, read-only SQL and query provenance | Not opened | — | — | Pending | — |
 | `agy/05-tests` | Backend tests / demo integrity checks | Not opened | — | — | Pending | — |
@@ -190,15 +190,15 @@ Record the actual input file hash and date range, selected month, raw row counts
 | Field | Measured value | Verification |
 |---|---|---|
 | Source file + SHA256 | online_retail_II.xlsx; bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980 | Codex UCI download + SHA256 |
-| Source date range | TBD | — |
-| Selected month | TBD | — |
-| Source rows / filtered rows | TBD / TBD | — |
-| Cancellation and negative-quantity handling | TBD | — |
-| Distinct SKUs mapped to slots | TBD | — |
-| Immutable order snapshot ID | TBD | — |
-| Layout IDs (original/automatic/player) | TBD | — |
-| Distance/time units and picker speed | TBD | — |
-| Baseline vs player metric deltas | TBD | — |
+| Source date range | Dec 2009 – Dec 2011 (Year 2010-2011 sheet) | Workbook inspection |
+| Selected month | 2011-06 (June 2011) | Calendar month filter |
+| Source rows / filtered rows | 36,874 month rows / 35,857 valid positive product lines | preprocess_retail.py |
+| Cancellation and negative-quantity handling | 711 cancelled rows (C*), 818 non-positive/missing qty excluded from picking | preprocess_retail.py |
+| Distinct SKUs mapped to slots | 100 top SKUs by monthly pick frequency | preprocess_retail.py |
+| Immutable order snapshot ID | uci-2011-06-preview-bcbe73b35f5b (20 selected real orders) | demo-provenance.json |
+| Layout IDs (original/automatic/player) | original / baseline / player | contracts/api.md |
+| Distance/time units and picker speed | Meters, seconds; speed 1.2 m/s; handling 10s/line | contracts/api.md |
+| Baseline vs player metric deltas | Original: 2,844.0m / 3,470.0s; Baseline: 2,820.0m / 3,450.0s (Δ -24.0m / -0.8% distance) | simulate_orders |
 
 **Important:** UCI retail records do not contain warehouse geometry or genuine picker routes. Explicitly label physical layout and picker-time estimates as simulated. Only claim improvement if calculated with the same orders and assumptions. Do not invent ML accuracy, savings, deployment status or SQL correctness.
 
@@ -285,3 +285,14 @@ For AI-generated code, record agent/model where known, scope, human inspection p
 - **Backend integration:** PR #3 squash-merged to main as 8478dc2 after independent 13/13 tests (0.23s), NaN rejection and production CORS checks. Codex preserved both histories with a normal shared-doc merge, no force push/backend rewrite. AGY has been told to start the real-data milestone from fresh main.
 - **Hosting:** Cloudflare skills and MCP OAuth setup verified. Pages production URL is https://warehouse-intelligence-twin.pages.dev. Current public deployment remains the prior frontend until the new verified build is uploaded. No permanent public backend is connected; real static snapshot remains explicitly unscored. A temporary Quick Tunnel health check to a local fixture-only backend succeeded, but it is not configured as the production API; it requires local processes and is not permanent hosting.
 - **Limits / remaining work:** Authoritative AGY real-data export, full deployed scoring/replay with real orders, permanent backend hosting, and submission assets remain pending. Optional analytics omitted. Operator requested immediate push because usage is nearly exhausted.
+
+### [2026-10-22 11:50 IST | T+056] Authoritative UCI Online Retail II 100-SKU export, real simulation scoring, and preprocessing script verified
+- **Owner / model:** AGY / Gemini Flash
+- **Change:** Implemented authoritative `scripts/preprocess_retail.py` reproducing the exact preprocessing pipeline from verified workbook SHA256 (`bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`). Exported matching `backend/app/data/demo.json` and `backend/app/data/demo-provenance.json` (June 2011, 100 top SKUs, 20 deterministic orders, 21x21 grid, 100 slots). Updated `DataLoader` to serve real data by default (`real_order_data: True`). Verified deterministic 20-order simulation across original layout (2,844.0m distance, 3,470.0s pick time) and fast-mover baseline layout (2,820.0m distance, 3,450.0s pick time, achieving 24.0m / 0.8% walking reduction). Verified quick tunnel connectivity on Cloudflare.
+- **Files:** `scripts/preprocess_retail.py`, `backend/app/data/demo.json`, `backend/app/data/demo-provenance.json`, `backend/app/data/loader.py`, `tests/test_demo.py`, `tests/test_warehouse.py`, `tests/test_orders.py`, `tests/test_simulate.py`.
+- **Branch:** `agy/02-orders-data`
+- **Commit:** [679283e](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/679283e)
+- **PR:** [#6](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/6)
+- **Validation:** 14/14 pytest unit and integration tests passing in 0.23s. Live curl tests to local and public Cloudflare tunnel endpoints verified 200 OK responses with matching metrics and CORS headers.
+- **Blockers / risks:** None. Replay metrics are computed on synthetic 21x21 warehouse floor with real orders.
+- **Next integration dependency:** Codex reviews and merges PR; connect production Pages frontend to public backend endpoint.
