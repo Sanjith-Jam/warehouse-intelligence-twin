@@ -5,32 +5,27 @@ The mandatory PS 4.2 implementation is now on `main`: real UCI preprocessing, a 
 ## Current verified state
 
 - **Frontend:** https://warehouse-intelligence-twin.pages.dev
-- **Latest release:** https://b4229a4a.warehouse-intelligence-twin.pages.dev
-- **Current API origin:** https://interventions-stopping-fell-quiz.trycloudflare.com
-- The API currently responds from the running FastAPI and `cloudflared` processes. The Quick Tunnel URL is ephemeral and tied to those processes; the app returns to its unscored real-data preview if the backend becomes unavailable.
+- **Latest release:** https://2b7a47d7.warehouse-intelligence-twin.pages.dev
+- **Durable API origin:** https://warehouse-intelligence-twin-api.warehouse-intelligence-twin-frontend.workers.dev
+- The API responds via a durable Cloudflare Workers VPC Gateway backed by a dedicated Cloudflare Named Tunnel (`wit-backend`). Survives clean process restarts without changing URLs; no dependency on ephemeral Quick Tunnels remains.
 - Verified live simulation on 20 June 2011 invoices, 1.2 m/s, 10 seconds per retained order line, and the synthetic 21×21 layout:
   - Original: 2,844.0 m and 3,470.0 s.
   - Fast-mover baseline: 2,820.0 m and 3,450.0 s.
   - Player with original assignment: 2,844.0 m and 3,470.0 s.
 - CORS preflight from the Pages origin returned 200. Live API responses carried the same dataset ID and 20 order routes for all three policies.
-- PRs #6 and #8 are merged. No open PR was present when the current documentation work began.
+- PRs #6, #8, #10, #11, and #12 are merged into `main`.
 
-## P0 — Stabilize and make the backend reproducible
+## P0 — Stabilize and make the backend reproducible (COMPLETED)
 
-### AGY: portable preprocessing invocation
+### AGY: portable preprocessing invocation — COMPLETED
+- Delivered in PR #12: `scripts/preprocess_retail.py` resolves `--input`, `UCI_DATASET_PATH`, or standard candidate paths, with strict checksum validation and `--allow-hash-mismatch` override.
+- Automated tests in `tests/test_preprocess.py` (22/22 pytest passing) assert byte-for-byte identity between backend and frontend `demo.json` and `demo-provenance.json`, as well as full reproduction against the source workbook.
+- Reproduction documentation and invariants published in `docs/DATA_REPRODUCIBILITY.md`.
 
-**Owner:** AGY. **Branch:** start from current `main`; use a small `agy/*` PR.
-
-- Remove the machine-specific default path from `scripts/preprocess_retail.py`, or make the input path required with a clear error. Document the official UCI download and expected SHA-256.
-- Keep the generated backend JSON and frontend JSON/provenance aligned; add a byte/data identity assertion so a future export cannot silently diverge.
-- **Acceptance:** the documented invocation works from a clean checkout when given the workbook path, produces stable output and the same dataset ID, and reports accurate counts. Add or update a focused test for the path/error and determinism.
-
-### AGY + Codex: durable public API
-
-- **AGY:** document the service runtime requirements and any backend changes needed for a stable deployment; keep API secrets out of Git and keep frontend ownership with Codex.
-- **Codex:** select a durable Python-capable host (or a named Cloudflare Tunnel with a stable hostname), verify its current free-plan/runtime limits, provision with the operator's account, configure CORS, and rebuild/redeploy Pages with that stable public origin.
-- Do not treat a Cloudflare Quick Tunnel as a permanent endpoint. Keep it only as a demo bridge while the local processes are running.
-- **Acceptance:** after a clean restart, public `/health`, `/api/demo`, `/api/orders`, and all three simulation policies remain reachable; dataset IDs/order IDs match; browser CORS works; Pages scene playback and score are verified. Document uptime/cold-start limitations if the chosen free host has them.
+### AGY + Codex: durable public API — COMPLETED
+- Delivered in PR #11: Permanent stable origin at `https://warehouse-intelligence-twin-api.warehouse-intelligence-twin-frontend.workers.dev` via Cloudflare Workers VPC Gateway and Named Tunnel on operator account.
+- Multi-platform deployment configurations added: `Dockerfile`, `Procfile`, `render.yaml`, `requirements.txt`, and `backend/DEPLOYMENT.md`.
+- Pages frontend rebuilt (`index-Cu3St36S.js`) and deployed with the durable origin. Controlled backend restart tested and verified.
 
 ## P1 — Submission package
 

@@ -21,4 +21,4 @@
 
 Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Codex retains frontend and Git merge authority; AGY remains the backend/data owner and uses small PRs for remaining backend work.
 
-[AGY] branch=agy/durable-backend status=done files=Dockerfile,Procfile,render.yaml,backend/DEPLOYMENT.md,deploy/** tests=19 passed (pytest), 3 passed (frontend) needs=merge PR #11 next=merge PR #12
+[AGY] branch=main commit=6ad0307 status=done files=backend/**,scripts/**,tests/**,deploy/** tests=22 passed in 25.24s (pytest), 3 passed (frontend) needs=human team submission assets next=pitch deck & demo recording
