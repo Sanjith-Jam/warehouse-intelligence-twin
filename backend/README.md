@@ -72,9 +72,44 @@ All endpoints strictly adhere to `contracts/api.md`:
 | `GET` | `/api/orders` | Immutable order snapshot |
 | `POST` | `/api/simulate` | Deterministic order picking simulation across `original`, `baseline`, or `player` layouts |
 
+## Dataset Preprocessing & Provenance
+
+The backend serves the preprocessed June 2011 UCI Online Retail II dataset (`backend/app/data/demo.json`). To re-run or verify the preprocessing pipeline:
+
+1. **Download the official workbook:**
+   - Source: UCI Machine Learning Repository — [Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii)
+   - Direct zip: `https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip`
+   - File: `online_retail_II.xlsx` (45,622,278 bytes)
+   - Expected SHA-256: `bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`
+
+2. **Run portable preprocessing:**
+   ```bash
+   # Explicit path:
+   python scripts/preprocess_retail.py --input /path/to/online_retail_II.xlsx
+
+   # Or via environment variable:
+   export UCI_DATASET_PATH=/path/to/online_retail_II.xlsx
+   python scripts/preprocess_retail.py
+
+   # Standard search locations checked automatically:
+   # datasets/online-retail-ii/online_retail_II.xlsx
+   # datasets/online_retail_II.xlsx
+   # data/online_retail_II.xlsx
+   # ./online_retail_II.xlsx
+   ```
+
+The script automatically synchronizes `backend/app/data/demo.json` with `frontend/public/demo.json` to guarantee byte-for-byte consistency.
+
+## Deployment & Production Hosting
+
+See [`backend/DEPLOYMENT.md`](DEPLOYMENT.md) for detailed deployment guides:
+- **Cloudflare Named Tunnel** (recommended for zero-cost, persistent custom domain on Cloudflare)
+- **Render.com / Railway / Fly.io** (cloud container or native Python deployment with Dockerfile / Procfile)
+- Steps for reconnecting Cloudflare Pages to the permanent backend origin.
+
 ## Current scope
 
-The API routes and simulator implement the shared contract against 100 real products and 20 deterministic selected orders. The warehouse geometry and travel assumptions remain synthetic. The preprocessing script requires a local UCI workbook; its current default path is specific to the original build environment, so pass `--input` on other machines. Optional analytics are deferred.
+The API routes and simulator implement the shared contract against 100 real products and 20 deterministic selected orders. The warehouse geometry and travel assumptions remain synthetic. Optional analytics are deferred.
 
 ## Architecture & Module Layout
 

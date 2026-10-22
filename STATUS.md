@@ -1,21 +1,24 @@
 # Current Status
 
-**Target:** NEXAI PS 4.2 — Warehouse Digital Twin. **Repository:** https://github.com/Sanjith-Jam/warehouse-intelligence-twin. **Pages:** https://warehouse-intelligence-twin.pages.dev. **Latest verified Pages release:** https://4dd24bfe.warehouse-intelligence-twin.pages.dev.
+**Target:** NEXAI PS 4.2 — Warehouse Digital Twin. **Repository:** https://github.com/Sanjith-Jam/warehouse-intelligence-twin. **Pages:** https://warehouse-intelligence-twin.pages.dev. **Latest verified Pages release:** https://2b7a47d7.warehouse-intelligence-twin.pages.dev.
 
 ## Delivered
 
 - The frontend uses the actual UCI Online Retail II June 2011 snapshot: 100 products and 20 deterministic orders with public provenance.
 - The backend loads the matching real-data snapshot and returns deterministic aisle-respecting simulation routes for original, fast-mover baseline, and player layouts. The selected orders are the same across policies.
-- AGY's real-data milestone PR #6 and end-to-end Pages integration PR #8 are merged. Integration commit is `a3f7d0a`; Codex's documentation/handoff commits are `293e565` and `3020327`.
-- Codex redeployed the current frontend build after updating shared data provenance. Production and deployment URLs return HTTP 200; the production bundle includes the active API origin and the current provenance text.
-- Current verification of the live service: `/health` HTTP 200; `/api/demo` returns `real_order_data=true`, 100 products, 100 slots and 20 orders; original/baseline/player simulations all returned matching dataset/order counts; browser-style CORS preflight from Pages returned 200. Results were original 2,844.0 m / 3,470.0 s, baseline 2,820.0 m / 3,450.0 s, and player-original assignment 2,844.0 m / 3,470.0 s. Layout, speed, and handling remain assumptions.
-- Current local checks: frontend unit tests 3/3 pass; Vite/TypeScript build succeeds (595 modules, 1,176 kB minified JS with the existing chunk-size warning); backend pytest 14/14 passes (one Starlette/httpx deprecation warning).
+- Durable public backend origin is live at `https://warehouse-intelligence-twin-api.warehouse-intelligence-twin-frontend.workers.dev` backed by Cloudflare Named Tunnel (`wit-backend`) and Cloudflare Workers VPC Gateway (`wit-api-service`).
+- Production Pages deployment (`index-Cu3St36S.js`) is connected to the durable backend origin; browser CORS verified.
+- Results verified: original 2,844.0 m / 3,470.0 s, baseline 2,820.0 m / 3,450.0 s, and player-original assignment 2,844.0 m / 3,470.0 s.
+- `scripts/preprocess_retail.py` is portable: searches `--input`, `UCI_DATASET_PATH`, or standard candidate paths, reporting actionable download instructions and expected SHA-256 (`bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`) if missing.
+- Backend and frontend fixtures (`demo.json` and `demo-provenance.json`) are verified byte-identical by automated regression tests in `tests/test_preprocess.py`.
 
 ## Availability and remaining work
 
-- The Pages frontend is public. Its backend URL is a Cloudflare Quick Tunnel that relies on running local `uvicorn` and `cloudflared` processes. Those processes were alive at the latest check, but their hostname and uptime are not durable.
-- `scripts/preprocess_retail.py` currently has a machine-specific default workbook path; use `--input` explicitly or fix portability before treating the default command as reproducible on another checkout.
+- The durable public backend is live and connected to production Pages. Survives controlled process restarts without changing URLs.
+- Alternative deployment configurations provided: `Dockerfile` (Python 3.12-slim), `Procfile`, `render.yaml` for Render.com/Railway/Fly.io.
 - Final human team roster, demo recording, pitch deck, and LinkedIn/X post links are not in the repository.
 - Optional text-to-SQL and stretch goals are deferred.
 
-Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Codex retains frontend and Git merge authority; AGY remains the backend/data owner and should use small PRs for remaining backend work.
+Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Codex retains frontend and Git merge authority; AGY remains the backend/data owner and uses small PRs for remaining backend work.
+
+[AGY] branch=agy/durable-backend status=done files=Dockerfile,Procfile,render.yaml,backend/DEPLOYMENT.md,deploy/** tests=19 passed (pytest), 3 passed (frontend) needs=merge PR #11 next=merge PR #12
