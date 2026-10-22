@@ -44,6 +44,10 @@ from backend.app.models.schemas import (
     OrderRoute,
     SimulationAssumptions,
     SimulateResponse,
+    PolicyResult,
+    SimulatedOrder,
+    SimulationRequest,
+    SimulationResponse,
 )
 
 __all__ = [
@@ -91,4 +95,8 @@ __all__ = [
     "OrderRoute",
     "SimulationAssumptions",
     "SimulateResponse",
+    "PolicyResult",
+    "SimulatedOrder",
+    "SimulationRequest",
+    "SimulationResponse",
 ]

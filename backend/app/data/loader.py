@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 from typing import Optional
+from fastapi import HTTPException, status
+from backend.app.config import settings
 from backend.app.models.schemas import (
     DatasetMeta,
     WarehouseLayout,
@@ -10,6 +12,8 @@ from backend.app.models.schemas import (
     DemoResponse,
     WarehouseResponse,
     OrdersResponse,
+    ErrorCode,
+    make_error_detail,
 )
 from backend.app.data.fixtures import (
     SAMPLE_META,
@@ -86,3 +90,66 @@ class DataLoader:
 
 
 data_loader = DataLoader()
+
+
+def load_demo_data(data_path: Optional[Path] = DEFAULT_DATA_PATH) -> DemoResponse:
+    """Load demo dataset cached via global data_loader instance."""
+    if data_path and data_path != DEFAULT_DATA_PATH:
+        loader = DataLoader(data_path)
+        return loader.get_demo_response()
+    return data_loader.get_demo_response()
+
+
+def get_dataset(dataset_id: str) -> DemoResponse:
+    """Retrieve preprocessed dataset snapshot by ID or demo dataset.
+
+    If dataset_id in ("demo", "uci-online-retail-ii-june-2011") or active demo ID:
+        Loads demo dataset from demo.json.
+    If dataset_id is an uploaded/preprocessed dataset:
+        Checks uploads/{dataset_id}/processed.json (or snapshot.json).
+    If not found:
+        Raises HTTPException(404) with structured error code DATASET_NOT_FOUND.
+    """
+    normalized_id = dataset_id.strip()
+
+    # Demo dataset aliases and active dataset ID
+    if normalized_id in ("demo", "uci-online-retail-ii-june-2011", data_loader.meta.dataset_id):
+        return load_demo_data()
+
+    # Search staged / uploaded datasets in configured upload directory and fallbacks
+    possible_roots = [
+        Path(settings.upload_storage_dir),
+        Path(__file__).resolve().parent / "uploads",
+        Path(__file__).resolve().parent.parent / "data" / "uploads",
+    ]
+
+    for root in possible_roots:
+        dataset_dir = root / normalized_id
+        for filename in ("processed.json", "snapshot.json"):
+            file_path = dataset_dir / filename
+            if file_path.exists() and file_path.is_file():
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    return DemoResponse(
+                        meta=DatasetMeta.model_validate(data["meta"]),
+                        layout=WarehouseLayout.model_validate(data["layout"]),
+                        products=[Product.model_validate(p) for p in data["products"]],
+                        orders=[Order.model_validate(o) for o in data["orders"]],
+                    )
+                except Exception as err:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=make_error_detail(
+                            ErrorCode.DATASET_NOT_FOUND,
+                            f"Corrupted or invalid dataset file at {file_path}: {err}",
+                        ).model_dump(),
+                    ) from err
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=make_error_detail(
+            ErrorCode.DATASET_NOT_FOUND,
+            f"Dataset '{dataset_id}' not found",
+        ).model_dump(),
+    )

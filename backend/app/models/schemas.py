@@ -130,7 +130,7 @@ class Slot(BaseModel):
     slot_id: str
     rack_cell: list[int] = Field(..., description="[x, z] coordinate of impassable rack")
     access_cell: list[int] = Field(..., description="[x, z] coordinate of walkable access cell")
-    sku: str
+    sku: Optional[str] = Field(default=None, description="Assigned product SKU, or None if unoccupied")
 
     @field_validator("rack_cell", "access_cell")
     @classmethod
@@ -413,7 +413,21 @@ class OrderRoute(BaseModel):
 class SimulationAssumptions(BaseModel):
     """Constants and assumptions used during simulation scoring."""
     speed_mps: float = 1.2
+    speed_m_s: Optional[float] = None
     handling_seconds_per_line: float = 10.0
+    handling_time_s: Optional[float] = None
+    dock: list[int] = Field(default_factory=lambda: [0, 0])
+    dock_coordinate: Optional[list[int]] = None
+
+    @model_validator(mode="after")
+    def populate_assumption_aliases(self) -> "SimulationAssumptions":
+        if self.speed_m_s is None:
+            self.speed_m_s = self.speed_mps
+        if self.handling_time_s is None:
+            self.handling_time_s = self.handling_seconds_per_line
+        if self.dock_coordinate is None:
+            self.dock_coordinate = self.dock
+        return self
 
 
 class SimulateResponse(BaseModel):
@@ -428,3 +442,89 @@ class SimulateResponse(BaseModel):
     routes: list[OrderRoute]
     warnings: list[str] = Field(default_factory=list)
     assumptions: SimulationAssumptions
+
+
+class PolicyResult(BaseModel):
+    """Simulation results for a specific layout policy."""
+    policy: str
+    slot_assignments: dict[str, str] = Field(default_factory=dict)
+    orders_replayed: int = 0
+    total_distance_m: float = 0.0
+    total_pick_time_s: float = 0.0
+    average_pick_time_s: float = 0.0
+    distance_m: Optional[float] = None
+    estimated_pick_time_s: Optional[float] = None
+    routes: list[OrderRoute] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def populate_legacy_aliases(self) -> "PolicyResult":
+        if self.distance_m is None:
+            self.distance_m = self.total_distance_m
+        if self.estimated_pick_time_s is None:
+            self.estimated_pick_time_s = self.total_pick_time_s
+        return self
+
+
+class SimulatedOrder(BaseModel):
+    """Simulated order with picker routes and picking times across policies."""
+    order_id: str
+    lines: list[OrderLine] = Field(default_factory=list)
+    routes: dict[str, OrderRoute] = Field(default_factory=dict)
+    picking_times: dict[str, float] = Field(default_factory=dict)
+    picking_times_s: dict[str, float] = Field(default_factory=dict)
+    distances_m: dict[str, float] = Field(default_factory=dict)
+    waypoints: Optional[list[list[int]]] = None
+    visits: Optional[list[RouteVisit]] = None
+    estimated_pick_time_s: Optional[float] = None
+    distance_m: Optional[float] = None
+
+
+class SimulationRequest(BaseModel):
+    """Dataset simulation request payload supporting custom layout permutation and replay params."""
+    order_ids: Optional[list[str]] = None
+    layout_permutation: Optional[dict[str, str]] = None
+    slot_assignments: Optional[dict[str, str]] = None
+    policy: Optional[str] = None
+    speed_m_s: Optional[float] = None
+    speed_mps: Optional[float] = None
+    handling_time_s: Optional[float] = None
+    handling_seconds_per_line: Optional[float] = None
+
+    @field_validator("order_ids")
+    @classmethod
+    def validate_order_ids(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        if v is not None:
+            if not v:
+                raise ValueError("order_ids must not be empty if provided")
+            if len(v) != len(set(v)):
+                raise ValueError("order_ids must be unique")
+        return v
+
+    @field_validator("speed_m_s", "speed_mps")
+    @classmethod
+    def validate_speed(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None:
+            if not math.isfinite(v):
+                raise ValueError("speed must be a finite number")
+            if v <= 0:
+                raise ValueError("speed must be positive")
+            if v > 10.0:
+                raise ValueError("speed must be <= 10.0")
+        return v
+
+
+class SimulationResponse(BaseModel):
+    """Comprehensive dataset simulation response matching FLASH-06 requirements."""
+    dataset_id: str
+    warehouse: WarehouseLayout
+    policies: dict[str, PolicyResult]
+    orders: list[SimulatedOrder]
+    assumptions: SimulationAssumptions
+    policy: Optional[str] = "comparison"
+    slot_assignments: Optional[dict[str, str]] = None
+    orders_replayed: Optional[int] = None
+    distance_m: Optional[float] = None
+    estimated_pick_time_s: Optional[float] = None
+    average_pick_time_s: Optional[float] = None
+    routes: Optional[list[OrderRoute]] = None
+    warnings: list[str] = Field(default_factory=list)
