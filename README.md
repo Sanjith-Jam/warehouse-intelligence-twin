@@ -75,13 +75,13 @@ pytest tests/ -v
 cd frontend && npm test && npm run build
 ```
 
-To reproduce the data export, download the UCI workbook described below and provide its path explicitly:
+To reproduce the data export, download the UCI workbook described below:
 
 ```sh
 python scripts/preprocess_retail.py --input /path/to/online_retail_II.xlsx --sheet "Year 2010-2011" --month 2011-06
 ```
 
-The default script input points to the original build environment, so use `--input` on another machine. See [`frontend/.env.example`](frontend/.env.example) and [`backend/.env.example`](backend/.env.example) for public configuration examples. Never place credentials in frontend variables.
+The script automatically searches `--input`, the `UCI_DATASET_PATH` environment variable, or standard repository locations (`datasets/`, `data/`, `./online_retail_II.xlsx`). If no file is found, it prints an actionable error with download instructions and the expected SHA-256 (`bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980`). It also automatically syncs the output to `frontend/public/` to guarantee byte-for-byte consistency. See [`backend/DEPLOYMENT.md`](backend/DEPLOYMENT.md) for permanent cloud hosting and Cloudflare Named Tunnel setup. See [`frontend/.env.example`](frontend/.env.example) and [`backend/.env.example`](backend/.env.example) for public configuration examples. Never place credentials in frontend variables.
 
 ## Data attribution and filtering
 

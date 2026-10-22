@@ -20,6 +20,8 @@ This log contains the technical stack, key decisions, AI assistance, and rejecte
 - Run the same selected order IDs, warehouse geometry, routing method, speed, and handling rule for original, baseline, and player layouts. The baseline places high-frequency products in the nearest reachable slots, with deterministic tie breaks.
 - Routes move between cardinally adjacent walkable cells, visit items in their retained order sequence, and return to the dock. The frontend animates returned API waypoints and validates responses before showing metrics.
 - Use Cloudflare Pages for static frontend delivery. A static Pages project cannot run the Python API, so scoring requires a separate backend service/origin.
+- Portable dataset preprocessing: `scripts/preprocess_retail.py` resolves input via `--input`, `UCI_DATASET_PATH`, or standard candidate paths, with strict checksum and download instructions on error. Automated fixture synchronization ensures backend and frontend `demo.json` and `demo-provenance.json` remain byte-identical.
+- Stable backend readiness: documented Cloudflare Named Tunnel (zero-cost, persistent custom domain on existing Cloudflare setup), Render.com, and container deployment in `backend/DEPLOYMENT.md`, with root `requirements.txt`, `Dockerfile`, and `Procfile`.
 - Codex owns `main`, frontend, shared contracts, integration, deployment, and all merges. AGY owns backend, tests, and preprocessing scripts and delivers through milestone PRs.
 
 ## AI assistance
