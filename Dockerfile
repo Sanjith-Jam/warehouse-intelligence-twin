@@ -4,7 +4,8 @@ FROM python:3.12-slim
 # Prevent Python from buffering stdout/stderr and writing pyc files
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8000
+    PORT=8000 \
+    UPLOAD_STORAGE_DIR=/app/backend/app/data/uploads
 
 WORKDIR /app
 
@@ -20,6 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend application and contracts
 COPY backend/ ./backend/
 COPY contracts/ ./contracts/
+
+# Ensure writable upload storage directory exists for dynamic datasets
+RUN mkdir -p /app/backend/app/data/uploads && chmod 777 /app/backend/app/data/uploads
 
 # Expose default HTTP port
 EXPOSE 8000

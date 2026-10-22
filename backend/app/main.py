@@ -22,7 +22,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_origin_regex=r"https://.*\.warehouse-intelligence-twin\.pages\.dev",
+    allow_origin_regex=r"https://([a-zA-Z0-9_\-]+\.)*warehouse-intelligence-twin\.pages\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
