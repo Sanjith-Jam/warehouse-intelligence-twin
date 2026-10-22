@@ -31,7 +31,15 @@ Warehouse geometry, rack positions, speed, and handling times are synthetic assu
 
 ## Current state
 
-Frontend implementation now includes the 3D picking floor, camera presets, keyboard-accessible slot swaps, inventory/orders views, contract-based comparison, and route playback. A synthetic browser API fixture has exercised the comparison workflow. Real-data processing and backend integration remain unverified; no real savings are claimed.
+**End-to-end integration complete.** The 3D picking floor loads the real June 2011 UCI dataset (100 SKUs, 20 orders). All three layout comparisons (original, fast-mover baseline, player) call the live backend API, replay identical orders with deterministic BFS aisle routing, and return reproducible distance/time metrics. The frontend validates every route against the contract before display.
+
+Live public deployment: https://warehouse-intelligence-twin.pages.dev  
+Backend origin (ephemeral quick tunnel — see deployment section): `https://interventions-stopping-fell-quiz.trycloudflare.com`
+
+Verified simulation results (20 real June 2011 orders, 1.2 m/s, 10 s/line):
+- **Original layout:** 2,844.0 m · 3,470.0 s total pick time
+- **Fast-mover baseline:** 2,820.0 m · 3,450.0 s (saves 24.0 m / 0.8%)
+- **Player layout:** identical inputs → identical deterministic output
 
 ## Development history and AI assistance
 
@@ -69,15 +77,28 @@ Selected problem: PS 4.2. Real month preprocessing, approximately 100 SKUs, aisl
 
 Production: https://warehouse-intelligence-twin.pages.dev
 
-Verified deployment: https://2ce31c6d.warehouse-intelligence-twin.pages.dev (source main `6089b88`). Static assets only; no Pages Functions, paid services, or plan upgrade were provisioned for this Pages project. At this milestone, the backend is not configured publicly, so the preview is labeled synthetic and comparison scoring is disabled.
+Latest verified deployment (commit `74012c1`, built with `VITE_API_BASE_URL` pointing to the active Cloudflare Quick Tunnel). The backend currently runs as a local FastAPI process tunnelled via `cloudflared`; the Quick Tunnel URL (`interventions-stopping-fell-quiz.trycloudflare.com`) is ephemeral and session-bound. For a persistent demo, restart the backend and tunnel and redeploy with the new URL.
 
-After building in `frontend/`, deploy a later verified milestone with:
+To rebuild and redeploy:
 
 ```sh
+cd frontend
+VITE_API_BASE_URL=https://<your-tunnel-hostname>.trycloudflare.com npm run build
 npx -y wrangler@4.151.3 pages deploy dist --project-name warehouse-intelligence-twin --branch main
 ```
 
-Use the same Cloudflare account and set `VITE_API_BASE_URL` to the verified public backend origin before building when available. Credentials remain in the local OAuth store, outside this repository. This is a Direct Upload Pages project; updates use the command above. Switching this project to Git integration later requires a new Pages project, per [Cloudflare Direct Upload documentation](https://developers.cloudflare.com/pages/get-started/direct-upload/).
+Or start a persistent named Cloudflare Tunnel with your account credentials (see [Cloudflare Tunnel docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps)) to get a stable URL without rebuilding. Credentials remain in the local OAuth store, outside this repository.
+
+**Backend startup (local demo):**
+
+```sh
+cd warehouse-intelligence-twin
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+# In a second terminal:
+./cloudflared tunnel --url http://127.0.0.1:8000
+```
 
 ## Real-data frontend preview
 

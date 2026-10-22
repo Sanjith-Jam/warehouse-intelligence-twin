@@ -296,3 +296,24 @@ For AI-generated code, record agent/model where known, scope, human inspection p
 - **Validation:** 14/14 pytest unit and integration tests passing in 0.23s. Live curl tests to local and public Cloudflare tunnel endpoints verified 200 OK responses with matching metrics and CORS headers.
 - **Blockers / risks:** None. Replay metrics are computed on synthetic 21x21 warehouse floor with real orders.
 - **Next integration dependency:** Codex reviews and merges PR; connect production Pages frontend to public backend endpoint.
+
+### [2026-10-22 12:09 IST | T+105] End-to-end integration verified and Pages redeployed with live backend
+- **Owner / model:** AGY / Claude Sonnet 4.6 (Phase 2 Final Integration Engineer)
+- **Change:** Connected deployed Cloudflare Pages frontend to the active FastAPI backend via the running Cloudflare Quick Tunnel. Rebuilt the frontend with `VITE_API_BASE_URL=https://interventions-stopping-fell-quiz.trycloudflare.com` baked into the production bundle and redeployed to Pages as commit `74012c1`. Updated `README.md` with current state, verified simulation metrics, and backend startup instructions.
+- **Files:** `README.md` (current state + deployment section updated).
+- **Branch / commit:** main / `74012c1` (handoff docs) → Pages deployment only (no new repo commit for frontend dist).
+- **Deployment:** Latest Pages production bundle: `index-jqdbiaXf.js`. Deployment URL: `https://b4229a4a.warehouse-intelligence-twin.pages.dev`.
+- **CORS:** Preflight OPTIONS to `https://interventions-stopping-fell-quiz.trycloudflare.com/api/simulate` with `Origin: https://warehouse-intelligence-twin.pages.dev` returns HTTP 200 with `access-control-allow-origin: https://warehouse-intelligence-twin.pages.dev`. Backend config already included Pages origin.
+- **Validation (all via live tunnel):**
+  - `GET /health` → `{"status":"ok"}` ✓
+  - `GET /api/demo` → `real_order_data: true`, 100 products, 20 orders, 100 slots ✓
+  - `POST /api/simulate` policy=original → distance=2844.0m, time=3470.0s, orders=20 ✓
+  - `POST /api/simulate` policy=baseline → distance=2820.0m, time=3450.0s, orders=20 ✓
+  - `POST /api/simulate` policy=player (original assignments) → distance=2844.0m, time=3470.0s, orders=20 ✓
+  - `pytest tests/ -v` → **14/14 passed** (0.21s) ✓
+  - Frontend: npm test → **3/3 passed** ✓; npm run build → **595 modules, 6.15s** ✓
+- **Limitations / risks:**
+  - Quick Tunnel URL (`interventions-stopping-fell-quiz.trycloudflare.com`) is ephemeral — tied to the running `cloudflared` daemon process. If the process dies, the Pages frontend loses its backend and reverts to offline preview mode. A permanent Named Tunnel (requires Cloudflare account) or cloud-hosted backend would resolve this.
+  - The UCI Online Retail II workbook is stored locally at `/home/bread/Documents/Codex/2026-10-22/you-are-the-technical-lead-github/work/datasets/online-retail-ii/online_retail_II.xlsx`; it is not committed to the repository (correct — too large). The preprocessing script `scripts/preprocess_retail.py` is committed and reproducible given the verified SHA256.
+  - No secrets or API keys are in the repository.
+- **Next:** Submission preparation — demo video, slides, README final review, LinkedIn/X social submission per participant instructions.
