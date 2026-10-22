@@ -109,6 +109,9 @@ class SimulateRequest(BaseModel):
     @field_validator("speed_mps")
     @classmethod
     def validate_speed(cls, v: float) -> float:
+        import math
+        if not math.isfinite(v):
+            raise ValueError("speed_mps must be a finite number")
         if v <= 0:
             raise ValueError("speed_mps must be positive")
         if v > 10.0:

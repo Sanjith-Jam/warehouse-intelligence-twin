@@ -109,11 +109,22 @@ def test_simulate_validation_errors(client: TestClient):
     r = client.post("/api/simulate", json={"order_ids": ["DEMO-ORDER-1"], "speed_mps": 15.0})
     assert r.status_code == 422
 
-    # 6. Player policy without assignments
+    # 6. Non-finite speed (NaN string, inf, -inf)
+    r = client.post("/api/simulate", json={"order_ids": ["DEMO-ORDER-1"], "speed_mps": "NaN"})
+    assert r.status_code == 422
+    assert "speed_mps must be a finite number" in str(r.json()["detail"])
+
+    r = client.post("/api/simulate", json={"order_ids": ["DEMO-ORDER-1"], "speed_mps": "Infinity"})
+    assert r.status_code == 422
+
+    r = client.post("/api/simulate", json={"order_ids": ["DEMO-ORDER-1"], "speed_mps": "-Infinity"})
+    assert r.status_code == 422
+
+    # 7. Player policy without assignments
     r = client.post("/api/simulate", json={"order_ids": ["DEMO-ORDER-1"], "policy": "player"})
     assert r.status_code == 422
 
-    # 7. Player policy with incomplete / invalid slots
+    # 8. Player policy with incomplete / invalid slots
     r = client.post(
         "/api/simulate",
         json={
@@ -124,7 +135,7 @@ def test_simulate_validation_errors(client: TestClient):
     )
     assert r.status_code == 422
 
-    # 8. Player policy with unknown SKU
+    # 9. Player policy with unknown SKU
     r = client.post(
         "/api/simulate",
         json={
@@ -134,3 +145,24 @@ def test_simulate_validation_errors(client: TestClient):
         },
     )
     assert r.status_code == 422
+
+
+def test_simulate_speed_validation(client: TestClient):
+    """Test focused validation of finite positive speed per contracts/api.md."""
+    # Valid speeds
+    for valid_speed in [0.1, 1.2, 5.0, 10.0]:
+        res = client.post(
+            "/api/simulate",
+            json={"order_ids": ["DEMO-ORDER-1"], "policy": "original", "speed_mps": valid_speed},
+        )
+        assert res.status_code == 200
+        assert res.json()["assumptions"]["speed_mps"] == valid_speed
+
+    # Non-finite and invalid speeds
+    for invalid_speed in ["NaN", "nan", "Infinity", "-Infinity", 0, -1.0, 10.1]:
+        res = client.post(
+            "/api/simulate",
+            json={"order_ids": ["DEMO-ORDER-1"], "policy": "original", "speed_mps": invalid_speed},
+        )
+        assert res.status_code == 422
+

@@ -11,7 +11,10 @@ class Settings(BaseModel):
     port: int = int(os.getenv("PORT", "8000"))
     cors_origins: list[str] = [
         origin.strip()
-        for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://localhost:3000,https://warehouse-intelligence-twin.pages.dev",
+        ).split(",")
         if origin.strip()
     ]
     handling_seconds_per_line: float = 10.0

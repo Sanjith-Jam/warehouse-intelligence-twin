@@ -31,8 +31,36 @@ Warehouse geometry, rack positions, speed, and handling times are synthetic assu
 
 ## Current state
 
-Repository scaffold and shared contract only. Frontend and backend implementation are pending. No working demo or deployment is claimed.
+Frontend implementation now includes the 3D picking floor, camera presets, keyboard-accessible slot swaps, inventory/orders views, contract-based comparison, and route playback. A synthetic browser API fixture has exercised the comparison workflow. Real-data processing, backend integration, and public deployment remain unverified; no real savings are claimed.
 
 ## Development history and AI assistance
 
 See [DEV_LOG.md](DEV_LOG.md) for verified milestones, failures, decisions, tests, and pending work. Codex performs integration; a Sol Medium frontend agent has been dispatched. AGY is operator-launched for backend work. Agent/model claims and test outcomes are recorded only when known; setup does not imply a completed feature.
+
+## Frontend setup
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5173`. Run AGY's backend on port 8000 when available; Vite proxies `/api`. Until then, a clearly labeled synthetic floor is inspectable, with scoring disabled. For deployment, build with `VITE_API_BASE_URL` set to the public backend origin and publish `frontend/dist`; see [frontend/README.md](frontend/README.md) and [frontend/.env.example](frontend/.env.example). That URL is public configuration, never a secret. No API key is required for PS 4.2.
+
+## Architecture and dependencies
+
+```mermaid
+flowchart LR
+  UCI[UCI workbook: one complete month] --> ETL[AGY preprocessing]
+  ETL --> API[FastAPI: immutable orders and layout]
+  API --> SIM[Deterministic aisle routing and slotting]
+  SIM --> UI[React / TypeScript / R3F floor]
+  UI -->|Complete player assignment and same order IDs| API
+  UI --> COMP[Original / baseline / player comparison]
+```
+
+Frontend: React, TypeScript, Vite, Three.js, React Three Fiber, and Drei; plain CSS, original primitive rack/carton/picker meshes. Backend target: Python/FastAPI and pandas; DuckDB/SQLGlot only for optional analytics. Exact frontend versions are locked in `frontend/package-lock.json`. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) records reference inspection and dependency attribution. Codex and the explicitly selected Sol Medium agent assisted development; test and review scope is recorded in DEV_LOG.md.
+
+## Submission status
+
+Selected problem: PS 4.2. Real month preprocessing, approximately 100 SKUs, aisle replay, and identical-orders three-layout evaluation must all work before stretch goals. PS 1.2 is an optional extension; no full text-to-SQL compliance is claimed. Public deployment, demo recording (up to five minutes), PowerPoint, LinkedIn/X links with #NEXAI2026, and team member details remain to be supplied and verified. Participant instructions mention both 3:00 PM and around 3:30 PM on 22 October 2026; use the earlier time for preparation until organizers clarify.
