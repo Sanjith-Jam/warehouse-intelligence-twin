@@ -1,5 +1,5 @@
 {
-  "purpose": "Read-only real-data frontend preview; unscored until authoritative backend is connected. Not the final AGY full-month export.",
+  "purpose": "Authoritative shared June 2011 UCI order snapshot used by the frontend and backend simulation.",
   "source_url": "https://archive.ics.uci.edu/dataset/502/online+retail+ii",
   "download_url": "https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip",
   "citation": "Chen, D. (2012), Online Retail II, DOI 10.24432/C5CG6D",
@@ -59,8 +59,8 @@
     "555234",
     "555240"
   ],
-  "selection": "First 20 invoices by first retained line timestamp, stable source row order; each order restricted to top100 SKUs.",
-  "missing_customers": "Retained for picking; customer identifiers not included in public preview.",
+  "selection": "First 20 invoices by first retained line timestamp, stable source row order; each order restricted to top 100 SKUs.",
+  "missing_customers": "Retained for picking; customer identifiers are not included in the public snapshot.",
   "warehouse": "Synthetic 21x21 grid, 1.5m cells, 100 fixed racks, 341 walkable cells, dock[0,0]; slot assignments seeded with Python Random(42).",
-  "metrics": "No walking/time/savings measured or claimed by this static export."
+  "metrics": "This data export contains no route metrics; distance and time are returned by the backend simulation."
 }
