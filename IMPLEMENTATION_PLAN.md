@@ -47,3 +47,5 @@ Text-to-SQL analytics, multiple pickers, congestion, batching, heatmaps, leaderb
 ## AGY handoff instructions
 
 AGY owns `backend/`, `tests/`, and preprocessing scripts; Codex owns `frontend/`, `contracts/`, deployment, and all merges. Read `AGENTS.md`, `contracts/api.md`, and `DEV_LOG.md`, then take the portable-preprocessing and backend deployment-readiness tasks above as focused PRs. Report branch, commit SHA, PR URL, exact tests and blockers in each PR; never push directly to `main`.
+
+**GitHub handoff:** [Issue #9 — portable preprocessing and stable backend](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/issues/9).
