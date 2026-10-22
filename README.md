@@ -5,7 +5,7 @@ Warehouse Intelligence Twin is a **NEXAI PS 4.2** browser game for warehouse slo
 ## Live demo and source
 
 - **Live app:** [https://warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev)
-- **Latest verified release:** [Pages deployment](https://b4229a4a.warehouse-intelligence-twin.pages.dev)
+- **Latest verified release:** [Pages deployment](https://4dd24bfe.warehouse-intelligence-twin.pages.dev)
 - **Source:** [GitHub repository](https://github.com/Sanjith-Jam/warehouse-intelligence-twin)
 - **Development log:** [DEV_LOG.md](DEV_LOG.md)
 - **Remaining work and handoff:** [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
