@@ -1,5 +1,7 @@
 # 3-Hour Parallel Sprint — Warehouse Intelligence Twin
 
+> This is the original kickoff schedule and preserves the initial sprint brief. Actual ownership and remaining work are maintained in [AGENTS.md](AGENTS.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); follow those files if this schedule conflicts with the current handoff.
+
 **Duration:** 180 minutes from actual start. **Primary submission:** PS 4.2; PS 1.2-inspired analytics secondary. **No hardware.** All agents use one canonical Git remote with separate worktrees/branches. See `AGENTS.md` for model assignments, safety and quota management.
 
 | Elapsed | Sol Medium — 3D frontend | Luna — data/simulation | Antigravity Claude — API/SQL | Antigravity Flash — QA/ops | Codex repo owner / PR integrator |

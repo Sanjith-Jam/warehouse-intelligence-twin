@@ -1,14 +1,23 @@
-# Sprint status
+# Current Status
 
-- Sprint start: 2026-10-22T05:24:05.633553+00:00 (UTC); freeze features at T+120, blocker-only at T+150.
-- Codex: frontend milestone implemented; build and 3 unit tests pass; synthetic browser flow passes. Owns frontend and merges.
-- AGY: PR #3 corrected at 07b32f7; independent 13-test run passes. Shared docs reconciled by Codex; merged as 8478dc2. Owns backend/tests/preprocessing.
-- Next AGY action: after PR #3 merge, branch from fresh main for actual UCI month export (~100 SKUs) in agy/02-orders-data. Official workbook SHA256 verified by Codex; see DEV_LOG.md.
-- Codex: frontend PR #2 merged (6089b88), Pages live https://warehouse-intelligence-twin.pages.dev; Cloudflare skills/MCP OAuth configured. Sol Medium upgrading scene/UI after operator feedback.
-- Public static hosting verified; real dataset and backend integration remain pending. Offline preview is labeled synthetic and unscored. See DEV_LOG.md for evidence and limitations.
+**Primary target:** NEXAI PS 4.2 — Warehouse Digital Twin. **GitHub:** https://github.com/Sanjith-Jam/warehouse-intelligence-twin. **Production frontend:** https://warehouse-intelligence-twin.pages.dev.
 
-Report format: `[agent] branch=<branch> commit=<sha> status=<done|blocked> files=<paths> tests=<results> needs=<dependency> next=<action>`.
+## Verified now
 
-- Latest frontend: scene-first operations redesign plus real June 2011 UCI preview (100 SKUs, 20 selected real orders); static mode is unscored until the matching backend is connected.
-- Operator requests all current changes pushed immediately due to usage limits.
-- Next AGY milestone: authoritative real-month preprocessing/export, then public backend connection. No analytics/stretch work before mandatory PS4.2 integration.
+- Public Cloudflare Pages site responds successfully and serves the June 2011 UCI preview (`dataset_id=uci-2011-06-preview-bcbe73b35f5b`, 100 SKUs, 20 orders, `real_order_data=true`).
+- `frontend/public/demo-provenance.json` records the preview's source, filters, workbook hash, counts, and synthetic warehouse assumptions.
+- Main contains the React Three Fiber operations interface and PR #3's FastAPI contract scaffold, deterministic router, and tests. Backend tests previously passed 13/13 in the reviewed PR.
+- Codex owns frontend, contract, docs, deployment, review, and merge. AGY owns backend, tests, and preprocessing scripts.
+- Current local verification: frontend unit tests passed 3/3; TypeScript/Vite production build succeeded (595 modules); backend tests passed 13/13. Vite reports a 1,176 kB minified JavaScript chunk warning. Backend pytest emits one Starlette/httpx deprecation warning.
+
+## Still incomplete
+
+- Backend currently loads a one-product synthetic fixture; it is not connected to the real June 2011 snapshot.
+- No public Python API is deployed. The Pages app is therefore a real-data preview only; same-orders original/baseline/player metrics and picker playback against the real dataset are not verified.
+- Final team roster, demo recording, pitch deck, and LinkedIn/X URLs are not present.
+
+## Next action
+
+AGY starts `agy/02-orders-data` from latest `main` and opens a focused PR with a reproducible, provenance-backed real-month loader. After it merges, deliver real-data simulation/integration. Follow [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); no analytics/stretch work until the PS 4.2 gates pass.
+
+No metrics or completed work should be inferred beyond the evidence above. Update this file in the next milestone PR with exact branch, SHA, tests, and blockers.

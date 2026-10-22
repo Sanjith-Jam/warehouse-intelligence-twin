@@ -1,6 +1,6 @@
 # Warehouse Intelligence Twin — Backend
 
-FastAPI backend providing deterministic warehouse simulation, aisle-respecting path routing, and slotting optimization endpoints.
+FastAPI backend scaffold for deterministic warehouse simulation, aisle-respecting path routing, and slotting endpoints. **Current data is a one-product synthetic fixture**; the public real-data preview is not yet connected to this API, so do not report its simulation results as UCI metrics. Follow the current data-loader and simulation milestones in [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md).
 
 ## Prerequisites
 
@@ -71,6 +71,10 @@ All endpoints strictly adhere to `contracts/api.md`:
 | `GET` | `/api/warehouse` | Warehouse grid layout, slot geometry, and product catalog |
 | `GET` | `/api/orders` | Immutable order snapshot |
 | `POST` | `/api/simulate` | Deterministic order picking simulation across `original`, `baseline`, or `player` layouts |
+
+## Current scope
+
+The API routes and simulator implement the shared contract against a synthetic fixture. Real June 2011 preprocessing, the 100-SKU service response, and public API deployment are pending. Optional analytics are out of scope until PS 4.2 is complete.
 
 ## Architecture & Module Layout
 
