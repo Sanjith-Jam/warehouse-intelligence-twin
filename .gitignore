@@ -17,3 +17,6 @@ datasets/
 *.tsbuildinfo
 .wrangler/
 .vite/
+
+# Superpowers scratch
+.superpowers/

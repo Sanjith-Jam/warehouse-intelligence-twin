@@ -63,8 +63,10 @@ This architecture exposes the local or VM-hosted FastAPI backend through the ope
 
 2. **Connect the Cloudflare Named Tunnel:**
    ```bash
-   cloudflared tunnel run --token eyJhIjoiNTlkYzUwZWMxYzhkNWM2NGU4MjY5MTA1OTUzYzdlYmYiLCJ0IjoiYTVmZjJjMGItM2FlZi00ZWIwLThjMjAtNGQ4MzVlM2FhOTc4IiwicyI6IllXRmhZV0ZoWVdGaFlXRmhZV0ZoWVdGaFlXRmhZV0ZoWVdGaFlXRmhZV0U9In0=
+   cloudflared tunnel run --token "$CLOUDFLARE_TUNNEL_TOKEN"
    ```
+   > [!IMPORTANT]
+   > Export `CLOUDFLARE_TUNNEL_TOKEN` in your environment or inject via a secret manager. Never commit raw token literals or secret credentials to Git.
 
 3. **Deploy / Update the Workers VPC Gateway (if modified):**
    ```bash
