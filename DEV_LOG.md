@@ -78,8 +78,8 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Change:** Implemented full backend runnable FastAPI server with CORS (allowing http://localhost:5173), strict Pydantic schemas conforming to contracts/api.md, GET /health, GET /api/demo, GET /api/warehouse, GET /api/orders, and POST /api/simulate with deterministic BFS routing, baseline slotting, and 422 validations. Added startup instructions, requirements.txt, .env.example, and 12 unit/integration tests in tests/.
 - **Files:** `backend/app/main.py`, `backend/app/config.py`, `backend/app/models/schemas.py`, `backend/app/models/__init__.py`, `backend/app/api/health.py`, `backend/app/api/demo.py`, `backend/app/api/warehouse.py`, `backend/app/api/orders.py`, `backend/app/api/simulate.py`, `backend/app/api/__init__.py`, `backend/app/data/fixtures.py`, `backend/app/data/loader.py`, `backend/app/data/__init__.py`, `backend/app/simulation/router.py`, `backend/app/simulation/__init__.py`, `backend/requirements.txt`, `backend/README.md`, `.env.example`, `backend/.env.example`, `tests/conftest.py`, `tests/test_health.py`, `tests/test_demo.py`, `tests/test_warehouse.py`, `tests/test_orders.py`, `tests/test_simulate.py`, `tests/test_router_unit.py`.
 - **Branch:** agy/01-api-scaffold
-- **Commit:** Pending commit
-- **PR:** Pending PR
+- **Commit:** [6cb33d1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/6cb33d1)
+- **PR:** [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3)
 - **Validation:** `.venv/bin/pytest tests/ -v` passed 12/12 tests in 0.08s. Live uvicorn daemon curl tests verified HTTP 200 and exact JSON payloads for /health, /api/demo, /api/warehouse, /api/orders, and /api/simulate (distance 3.0m, pick time 12.5s, waypoints [[0,0],[1,0],[0,0]]), plus HTTP 422 for invalid requests.
 - **Evidence:** Pytest test run and curl outputs verified on localhost:8000.
 - **Blockers / risks:** None. Fixture data labeled synthetic per contract.
@@ -122,7 +122,7 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 
 | Planned branch | Scope | Opened PR / URL | Commit | Tests | Codex review | Merge SHA |
 |---|---|---|---|---|---|---|
-| `agy/01-api-scaffold` | FastAPI `/health`, API skeleton | Not opened | — | — | Pending | — |
+| `agy/01-api-scaffold` | FastAPI `/health`, API skeleton, BFS router | [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3) | 6cb33d1 | 12 passed (0.08s) | Pending | — |
 | `agy/02-orders-data` | Retail preprocessing and stable order fixtures | Not opened | — | — | Pending | — |
 | `agy/03-path-and-slotting` | Aisle routing and three-way replay metrics | Not opened | — | — | Pending | — |
 | `agy/04-analytics-sql` | DuckDB, read-only SQL and query provenance | Not opened | — | — | Pending | — |
