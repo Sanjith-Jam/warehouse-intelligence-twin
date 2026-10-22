@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "warehouse-intelligence-twin-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-10-01",
+  "account_id": "59dc50ec1c8d5c64e8269105953c7ebf",
+  "vpc_services": [
+    {
+      "binding": "BACKEND",
+      "service_id": "01a16279-2416-7f52-b54d-5b89e44ad6bb"
+    }
+  ]
+}
