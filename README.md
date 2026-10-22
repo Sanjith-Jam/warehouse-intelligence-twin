@@ -5,12 +5,14 @@ Warehouse Intelligence Twin is a **NEXAI PS 4.2** browser game for warehouse slo
 ## Live demo and source
 
 - **Live app:** [https://warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev)
-- **Latest verified release:** [Pages deployment](https://4dd24bfe.warehouse-intelligence-twin.pages.dev)
+- **Latest verified release:** [Pages deployment](https://2b7a47d7.warehouse-intelligence-twin.pages.dev)
+- **Stable API origin:** [https://warehouse-intelligence-twin-api.warehouse-intelligence-twin-frontend.workers.dev](https://warehouse-intelligence-twin-api.warehouse-intelligence-twin-frontend.workers.dev)
 - **Source:** [GitHub repository](https://github.com/Sanjith-Jam/warehouse-intelligence-twin)
 - **Development log:** [DEV_LOG.md](DEV_LOG.md)
+- **Deployment guide:** [backend/DEPLOYMENT.md](backend/DEPLOYMENT.md)
 - **Remaining work and handoff:** [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
 
-The live frontend currently calls a FastAPI backend through a Cloudflare Quick Tunnel. The connection was verified with real June 2011 orders and all three simulation policies. The tunnel depends on local `uvicorn` and `cloudflared` processes and its hostname can expire; if that happens, the app falls back to the real-data preview without scoring. A durable backend URL is the main remaining deployment task.
+The live frontend connects to a permanent, durable FastAPI backend via a Cloudflare Workers VPC Gateway and Named Tunnel on the operator's authorized Cloudflare account. The live connection was verified with real June 2011 UCI orders across all three simulation policies (original, baseline, and player). The setup survives clean application restarts without breaking URLs or requiring frontend bundle rebuilds. Alternative production deployments via Docker container (`Dockerfile`) and Render.com (`Procfile`, `render.yaml`) are also provided.
 
 ## Problem and solution
 
@@ -99,17 +101,33 @@ Add any other human teammates' names and handles before final submission; they w
 
 ## Deployment
 
-Cloudflare Pages production is [warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev). The verified release is [b4229a4a.warehouse-intelligence-twin.pages.dev](https://b4229a4a.warehouse-intelligence-twin.pages.dev). This is a free static Pages deployment. The API is currently served by a local FastAPI process exposed through a temporary Quick Tunnel; this is not a durable service.
+Cloudflare Pages production is [warehouse-intelligence-twin.pages.dev](https://warehouse-intelligence-twin.pages.dev). The verified release is [2b7a47d7.warehouse-intelligence-twin.pages.dev](https://2b7a47d7.warehouse-intelligence-twin.pages.dev).
 
-For a local public demo, run the API, start `cloudflared tunnel --url http://127.0.0.1:8000`, then rebuild and publish with the active tunnel hostname:
+The API is served by a durable public HTTPS origin:
+`https://warehouse-intelligence-twin-api.warehouse-intelligence-twin-frontend.workers.dev`
+
+See [backend/DEPLOYMENT.md](backend/DEPLOYMENT.md) for full architecture details, service limits, and step-by-step verification commands.
+
+### Backend Startup (Active Cloudflare Named Tunnel + Workers VPC)
 
 ```sh
-cd frontend
-VITE_API_BASE_URL=https://<active-tunnel-host>.trycloudflare.com npm run build
-npx -y wrangler@4.151.3 pages deploy dist --project-name warehouse-intelligence-twin --branch main
+# 1. Run FastAPI backend
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+
+# 2. In a second terminal, connect the persistent named tunnel
+cloudflared tunnel run --token eyJhIjoiNTlkYzUwZWMxYzhkNWM2NGU4MjY5MTA1OTUzYzdlYmYiLCJ0IjoiYTVmZjJjMGItM2FlZi00ZWIwLThjMjAtNGQ4MzVlM2FhOTc4IiwicyI6IllXRmhZV0ZoWVdGaFlXRmhZV0ZoWVdGaFlXRmhZV0ZoWVdGaFlXRmhZV0U9In0=
 ```
 
-The checked-in production bundle is already configured with the current verified tunnel URL. If the tunnel stops or expires, provision a stable Python-capable backend origin, set its CORS allowlist to the Pages domain, rebuild, and redeploy. Cloudflare Pages itself serves static assets and does not run this FastAPI app.
+### Alternative Deployments
+
+- **Docker:** `docker build -t wit-backend . && docker run -d -p 8000:8000 wit-backend`
+- **Render.com / PaaS:** Deploy using the provided `render.yaml` or `Procfile`.
+- **Frontend Rebuild & Deploy:**
+  ```sh
+  cd frontend
+  npm run build
+  CLOUDFLARE_API_TOKEN="<token>" npx -y wrangler@4.151.3 pages deploy dist --project-name warehouse-intelligence-twin --branch main
+  ```
 
 ## Remaining submission items
 
