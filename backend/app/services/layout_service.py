@@ -141,7 +141,7 @@ class LayoutService:
 
         upload_dir = self.base_dir / dataset_id
         if upload_dir.is_dir():
-            for json_name in ("dataset.json", "preprocessed.json", "data.json"):
+            for json_name in ("processed.json", "snapshot.json", "dataset.json", "preprocessed.json", "data.json"):
                 json_file = upload_dir / json_name
                 if json_file.is_file():
                     try:
@@ -165,7 +165,7 @@ class LayoutService:
             return set()
 
         # 1. Check preprocessed snapshot JSON files
-        for json_name in ("dataset.json", "preprocessed.json", "data.json"):
+        for json_name in ("processed.json", "snapshot.json", "dataset.json", "preprocessed.json", "data.json"):
             json_file = upload_dir / json_name
             if json_file.is_file():
                 try:
@@ -241,7 +241,7 @@ class LayoutService:
 
         upload_dir = self.base_dir / dataset_id
         if upload_dir.is_dir():
-            for json_name in ("dataset.json", "preprocessed.json", "data.json"):
+            for json_name in ("processed.json", "snapshot.json", "dataset.json", "preprocessed.json", "data.json"):
                 json_file = upload_dir / json_name
                 if json_file.is_file():
                     try:

@@ -204,10 +204,14 @@ def export_dataset(
     # Fetch dataset details (validates existence and preprocessed state)
     detail = get_dataset_detail(normalized_id, base_dir)
 
-    ds_dir = get_dataset_dir(normalized_id, base_dir) if normalized_id not in ("demo", "uci-online-retail-ii-june-2011") else Path(__file__).resolve().parent.parent / "data"
+    ds_dir = get_dataset_dir(normalized_id, base_dir)
+    ds_dir.mkdir(parents=True, exist_ok=True)
 
     if fmt == "json":
-        export_file = ds_dir / "processed.json" if ds_dir.exists() and (ds_dir / "processed.json").exists() else DEFAULT_DATA_PATH
+        if normalized_id in ("demo", "uci-online-retail-ii-june-2011"):
+            export_file = DEFAULT_DATA_PATH
+        else:
+            export_file = ds_dir / "processed.json" if (ds_dir / "processed.json").exists() else ds_dir / "snapshot.json"
         file_size = export_file.stat().st_size
         return (
             DatasetExportResponse(
