@@ -1,6 +1,6 @@
 # DEV_LOG.md — Warehouse Intelligence Twin
 
-> **Status:** Repository initialization verified; application implementation is in progress. Application tests, dataset processing, deployment, and completed application features are not yet verified.
+> **Status:** Repository initialization verified; application implementation is in progress. Frontend build, synthetic browser checks, static deployment, and backend scaffold tests are verified. Real-month processing and deployed backend integration remain pending.
 >
 > **Event:** NEXAI 2026 Hackathon | **Official problem:** PS 4.2 — Warehouse Digital Twin / 3D Picking Floor Game | **Extension:** PS 1.2-inspired Ask-Your-Data retail analytics | **Hardware:** None | **Sprint:** 3 hours from the team's actual start time.
 >
@@ -13,7 +13,7 @@
 | Sprint start (local time) | 2026-10-22 10:54:05 IST (repository bootstrap start recorded in STATUS.md) |
 | Sprint target end | T+180 min (or earlier if official submission closes) |
 | Canonical GitHub repo | https://github.com/Sanjith-Jam/warehouse-intelligence-twin |
-| Demo URL | https://warehouse-intelligence-twin.pages.dev |
+| Demo URL | https://warehouse-intelligence-twin.pages.dev — static frontend preview; real backend not yet connected |
 | Commit at start | [5d9862e](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/5d9862e95fe196bf4ada32100dd69bcbc5707163) — initial commit, 2026-10-22 10:54:16 IST |
 | Dataset source / license | UCI Online Retail II, https://doi.org/10.24432/C5CG6D, CC BY 4.0; actual file and preprocessing unverified |
 | Coordinator | Codex |
@@ -78,7 +78,7 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Change:** React/Vite/TypeScript/R3F app with original primitive racks/cartons, dock, picker, isometric/top cameras, keyboard-accessible two-slot swapping, demand shading, product search, orders, server-backed original/baseline/player comparison, live replay counters, play/pause/reset, and explicit 6x playback. Offline synthetic preview is visibly labeled and unscored.
 - **Files:** frontend/**, DESIGN.md, THIRD_PARTY_NOTICES.md, README.md, .gitignore.
 - **Branch:** codex/frontend.
-- **Commit / PR:** [10e7de6f682469f9364db8bb9ec1fbfa4493c152](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/10e7de6f682469f9364db8bb9ec1fbfa4493c152); PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) (merged into main as [6089b88](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/6089b88)).
+- **Commit / PR:** [10e7de6f682469f9364db8bb9ec1fbfa4493c152](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/10e7de6f682469f9364db8bb9ec1fbfa4493c152); PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) (later squash-merged as 6089b88)..
 - **Validation (Codex rerun):** npm test passed 3/3, 0 failures; npm run build passed TypeScript and Vite 7.3.7 (594 modules), JS 1,172.28 kB / 331.02 kB gzip. Node environment v26.11.1; declared support is >=22.12, not independently tested on that minimum. git diff --check passed.
 - **Browser verification:** Playwright CLI synthetic API fixture passed identical ordered inputs/speed across policies, policy switching, play/pause/reset, stale-result invalidation after swaps, new mapping submission, orders tab, top view, and 390px no-horizontal-overflow check. Fresh synthetic run had 0 console errors/warnings. Reproducible fixture is frontend/checks/browser-contract-check.js. This does not verify AGY backend or real savings.
 - **Offline verification:** Returned browser to unmocked preview; no backend is running locally, so Vite proxy /api/demo returned HTTP 500 and UI accurately displayed backend unavailable, scoring disabled. Screenshot captured outside product repository in task outputs/warehouse-frontend-preview.png.
@@ -88,17 +88,38 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Blockers / risks:** AGY has no open PR at latest explicit checkpoint. Real data, real backend integration, public deployment, and hardware performance remain unverified. Vite warns about bundle size; optional analytics intentionally omitted.
 - **Next integration dependency:** Publish/review/squash frontend PR; install Cloudflare setup requested by operator and deploy static frontend on free tier. Public preview will remain unscored until backend is connected.
 
+### [2026-10-22 11:23:59 IST | T+029] Cloudflare setup and Pages deployment verified; first backend PR reviewed
+- **Owner / model:** Codex integration lead; frontend source milestone by Sol Medium.
+- **Frontend merge:** PR [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) squash-merged to main [6089b88](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/6089b88). Frontend branch synced with main afterward.
+- **Setup:** Fetched operator-requested https://developers.cloudflare.com/agent-setup/prompt.md; ran its non-Claude global Cloudflare skills installer. All 19 skills installed for Codex; installer also reported unsupported PromptScript global-install targets (not a Codex installation failure). Cloudflare MCP registered in user config; fresh codex mcp login completed with operator authorization. codex mcp list reports o_auth. Wrangler 4.151.3 OAuth verified for the operator account. No credential values were copied to source or log; optional beta cf CLI was not installed. New MCP tools require a later agent reload/restart to become available in the current session.
+- **Deployment:** Created Direct Upload Pages project warehouse-intelligence-twin, production branch main, and uploaded the verified build. Production https://warehouse-intelligence-twin.pages.dev; deployment https://2ce31c6d.warehouse-intelligence-twin.pages.dev. Four static files, total 1,184,965 bytes; largest file 1,172,278 bytes; no Pages Functions.
+- **Validation:** HTTP HEAD to production returned 200. Browser loaded correct title and canvas; verified backend-unavailable preview is visible, Replay & compare disabled, desktop horizontal overflow false. These checks prove frontend hosting only, not backend/data correctness.
+- **Deployment incident:** Current Wrangler pages project create automatically delegated toward Workers and mutated local package/Vite/deploy configuration. The delegated process completed a temporary Worker deployment before cancellation could take effect. Restored only CLI-generated changes to the clean tested source, rebuilt successfully, then used the source-verified create --force opt-out to create actual Pages; later Pages deploy used no force. The unintended Worker was then deleted successfully; the separate Pages deployment remains live. No other agent source was discarded.
+- **Backend review:** AGY PR [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3), head 645397a, inspected in isolated worktree. Installed declared requirements in isolated uv environment; python -m pytest tests -q passed 12 tests (0.13s), one Starlette/httpx deprecation warning. System Python's first test attempt lacked pytest and did not run tests.
+- **Exact blocker:** POST /api/simulate with policy original and speed_mps string NaN returns 200 and an incorrect 10-second handling-only time for a 3m route; contract requires finite speed and 422. Commented exact reproduction and requested AGY fix its branch. Shared DEV_LOG/STATUS merge conflicts must preserve both agents' entries; production Pages CORS requested. No backend merge performed.
+- **New user direction:** Frontend considered too simple; Sol Medium dispatched for a scene-first industrial workspace redesign using inspected source references. User explicitly requires actual UCI data; AGY requested to deliver the real-month preprocessing milestone, hashes/counts/filter provenance and ~100 SKUs. No real data processing is claimed by this entry.
+- **Next:** Integrate AGY's corrected PR, inspect upgraded frontend, and redeploy only the verified next build.
+
 ### [2026-10-22 11:15 IST | T+021] Backend FastAPI API scaffold, exact contracts, router and tests verified
 - **Owner / model:** AGY / Gemini Flash
-- **Change:** Implemented full backend runnable FastAPI server with CORS (allowing http://localhost:5173 and https://warehouse-intelligence-twin.pages.dev), strict Pydantic schemas conforming to contracts/api.md, GET /health, GET /api/demo, GET /api/warehouse, GET /api/orders, and POST /api/simulate with deterministic BFS routing, baseline slotting, and 422 validations. Added startup instructions, requirements.txt, .env.example, and 12 unit/integration tests in tests/.
+- **Change (AGY-reported; CORS detail updated after review):** Implemented full backend runnable FastAPI server with CORS (allowing http://localhost:5173 and https://warehouse-intelligence-twin.pages.dev), strict Pydantic schemas conforming to contracts/api.md, GET /health, GET /api/demo, GET /api/warehouse, GET /api/orders, and POST /api/simulate with deterministic BFS routing, baseline slotting, and 422 validations. Added startup instructions, requirements.txt, .env.example, and 12 unit/integration tests in tests/.
 - **Files:** `backend/app/main.py`, `backend/app/config.py`, `backend/app/models/schemas.py`, `backend/app/models/__init__.py`, `backend/app/api/health.py`, `backend/app/api/demo.py`, `backend/app/api/warehouse.py`, `backend/app/api/orders.py`, `backend/app/api/simulate.py`, `backend/app/api/__init__.py`, `backend/app/data/fixtures.py`, `backend/app/data/loader.py`, `backend/app/data/__init__.py`, `backend/app/simulation/router.py`, `backend/app/simulation/__init__.py`, `backend/requirements.txt`, `backend/README.md`, `.env.example`, `backend/.env.example`, `tests/conftest.py`, `tests/test_health.py`, `tests/test_demo.py`, `tests/test_warehouse.py`, `tests/test_orders.py`, `tests/test_simulate.py`, `tests/test_router_unit.py`.
 - **Branch:** agy/01-api-scaffold
 - **Commit:** [6cb33d1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/6cb33d1)
 - **PR:** [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3)
 - **Validation:** `.venv/bin/pytest tests/ -v` passed 12/12 tests in 0.08s. Live uvicorn daemon curl tests verified HTTP 200 and exact JSON payloads for /health, /api/demo, /api/warehouse, /api/orders, and /api/simulate (distance 3.0m, pick time 12.5s, waypoints [[0,0],[1,0],[0,0]]), plus HTTP 422 for invalid requests.
 - **Evidence:** Pytest test run and curl outputs verified on localhost:8000.
-- **Blockers / risks:** None. Fixture data labeled synthetic per contract.
+- **Blockers / risks:** Fixture data is synthetic. Initial review found a nonfinite-speed defect; see subsequent Codex verification entry for its resolution.
 - **Next integration dependency:** Address Codex review comments on finite-speed validator and merge conflicts; merge to main; AGY starts agy/02-orders-data.
+
+
+### [2026-10-22 11:31:20 IST | T+037] Backend PR #3 fixes independently verified and shared logs reconciled
+- **Owner / model:** AGY implemented backend changes on its branch; Codex reviewed and resolved canonical shared documentation conflicts. No backend code was rewritten by Codex.
+- **Commit / PR:** AGY head 07b32f79ca9835809f5e1bf7d5730d776cfd9885, PR #3. Reconciliation uses an ordinary merge commit preserving both histories; no force push.
+- **Validation:** Isolated Python 3.12.15 review environment installed backend/requirements.txt; python -m pytest tests -q passed 13/13 in 0.23s, one Starlette/httpx deprecation warning. Reviewed explicit math.isfinite speed rejection, regression cases, and production Pages CORS configuration. Original NaN defect is fixed in this revision.
+- **Files:** AGY backend/, tests/, environment examples; Codex merged only DEV_LOG.md and STATUS.md conflicts, preserving published deployment/reference history and AGY's milestone report.
+- **Dataset evidence:** Downloaded official UCI ZIP from https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip: 45,622,418 bytes, SHA256 572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb. Extracted online_retail_II.xlsx: 45,622,278 bytes, SHA256 bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980. Source file verified only; monthly preprocessing, counts, and savings remain pending.
+- **Next:** Squash-merge verified PR #3; AGY branches from fresh main for real-month export. Frontend visual upgrade remains in progress on Codex's separate branch.
 
 ### Entry format (copy for each actual event)
 
@@ -123,7 +144,7 @@ Mark each gate PASS / FAIL / PARTIAL / NOT TESTED. Do not mark PASS based on an 
 | Checkpoint | Required demonstration | Owner | Status | Evidence |
 |---|---|---|---|---|
 | T+15 | Public repo, initial docs, `contracts/api.md`, branch ownership clear | Codex | PASS (initialization only) | Initial commit 5d9862e; successful public repo creation and push |
-| T+45 | Warehouse scene renders; Retail II parser or clearly labeled fixture works; endpoint shapes agree | Codex + AGY | PARTIAL | Frontend rendered and deployed to Cloudflare Pages (6089b88); backend PR #3 under review |
+| T+45 | Warehouse scene renders; Retail II parser or clearly labeled fixture works; endpoint shapes agree | Codex + AGY | NOT TESTED | — |
 | T+90 | Picker walks actual aisle path; backend returns route and distance | Codex + AGY | NOT TESTED | — |
 | T+120 | Original vs fast-mover baseline vs player slotting; same orders and KPIs | Codex + AGY | NOT TESTED | — |
 | T+150 | Full integration/build/smoke test; freeze new features | Codex | NOT TESTED | — |
@@ -136,10 +157,10 @@ Mark each gate PASS / FAIL / PARTIAL / NOT TESTED. Do not mark PASS based on an 
 Add one row when a PR actually exists. Branch names below are anticipated, not proof of branches.
 
 | Planned branch | Scope | Opened PR / URL | Commit | Tests | Codex review | Merge SHA |
+| codex/dev-log | Canonical development log | [#1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/1) | 2432aec | Documentation diff whitespace check passed | Codex merged | eed189f |
+| codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex reviewed and squash-merged | 6089b88 |
 |---|---|---|---|---|---|---|
-| `codex/dev-log` | Canonical development log | [#1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/1) | 2432aec | Documentation diff whitespace check passed | Codex merged | `eed189f` |
-| `codex/frontend` | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex merged | `6089b88` |
-| `agy/01-api-scaffold` | FastAPI `/health`, API skeleton, BFS router | [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3) | 6cb33d1 | 12 passed (0.08s) | Review comments: finite speed validator & CORS update | Pending |
+| `agy/01-api-scaffold` | FastAPI scaffold, routing, validation | [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3) | 07b32f7 | Codex: 13 passed (0.23s) | Reviewed; merge pending | Pending |
 | `agy/02-orders-data` | Retail preprocessing and stable order fixtures | Not opened | — | — | Pending | — |
 | `agy/03-path-and-slotting` | Aisle routing and three-way replay metrics | Not opened | — | — | Pending | — |
 | `agy/04-analytics-sql` | DuckDB, read-only SQL and query provenance | Not opened | — | — | Pending | — |
@@ -153,11 +174,11 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 
 | Endpoint (planned) | Expected function | Status |
 |---|---|---|
-| `GET /health` | Service status | VERIFIED (200 OK) |
-| `GET /api/demo` | Frontend bootstrap: metadata, layout, products, orders | VERIFIED (200 OK, exact contract shape) |
-| `GET /api/warehouse` | Aisles, slots, products, dock and coordinates | VERIFIED (200 OK) |
-| `GET /api/orders` | Stable order snapshot, filtered order lines | VERIFIED (200 OK) |
-| `POST /api/simulate` | Layout scenario → walkable picker path and metrics | VERIFIED (200 OK, original/baseline/player + 422 validations) |
+| `GET /health` | Service status | VERIFIED in isolated scaffold tests; public API pending |
+| `GET /api/demo` | Frontend bootstrap: metadata, layout, products, orders | VERIFIED in isolated scaffold tests; public API pending |
+| `GET /api/warehouse` | Aisles, slots, products, dock and coordinates | VERIFIED in isolated scaffold tests; public API pending |
+| `GET /api/orders` | Stable order snapshot, filtered order lines | VERIFIED in isolated scaffold tests; public API pending |
+| `POST /api/simulate` | Layout scenario → walkable picker path and metrics | VERIFIED in isolated scaffold tests; public API pending |
 | `POST /api/analyze` | Natural language → validated read-only SQL + result | NOT IMPLEMENTED/UNVERIFIED |
 
 **Contract decisions to record:** coordinate system and units; stable SKU/slot/order IDs; cancellation treatment; picker speed; route ordering and interpolation; number formats; errors and timeouts; schema version. Attach concrete request/response samples to the contract, not to speculative log entries.
@@ -168,7 +189,7 @@ Record the actual input file hash and date range, selected month, raw row counts
 
 | Field | Measured value | Verification |
 |---|---|---|
-| Source file + SHA256 | TBD | — |
+| Source file + SHA256 | online_retail_II.xlsx; bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980 | Codex UCI download + SHA256 |
 | Source date range | TBD | — |
 | Selected month | TBD | — |
 | Source rows / filtered rows | TBD / TBD | — |
@@ -185,8 +206,9 @@ Record the actual input file hash and date range, selected month, raw row counts
 
 | Agent | Current task | Last push | Remaining quota (actual UI reading) | Blocker |
 |---|---|---|---|---|
-| Codex / Sol Medium | Frontend build/unit/synthetic browser checks pass; deployed to Cloudflare Pages | Commit 6089b88 merged | Read at 2026-10-22 11:10:28 IST: Codex 5h used 21%, weekly used 25% | Awaiting backend integration |
-| AGY / Gemini Flash | Updating PR #3 with finite-speed validator & production CORS | Branch agy/01-api-scaffold | Pro plan active | None |
+| Codex / Sol Medium | Frontend build/unit/synthetic browser checks pass; real backend integration pending | Frontend publication pending | Read at 2026-10-22 11:10:28 IST: Codex 5h used 21%, weekly used 25%; no AGY quota claimed | Backend PR pending |
+| AGY / Claude | Not started / unverified | — | Not checked | — |
+| AGY / Gemini Flash | Not started / unverified | — | Not checked | — |
 | Luna, if assigned | Not started / unverified | — | Not checked | — |
 
 - AGY updates at each pushed milestone/PR (roughly every 15–25 minutes when a stable change exists).
@@ -203,7 +225,6 @@ Record the actual input file hash and date range, selected month, raw row counts
 | Time | Incident | Impact | Owner | Fix / workaround | Status |
 |---|---|---|---|---|---|
 | Verified 2026-10-22 10:58:19 IST | Initial git commit: Author identity unknown; first push had no main ref | Bootstrap delayed until configuration | Codex | Repository-local Git identity configured; commit and push succeeded | Resolved in initial commit |
-| Verified 2026-10-22 11:20:00 IST | PR #3 review: speed_mps="NaN" returned 200 with 0 travel time instead of 422 | Nonfinite speed accepted | AGY | Explicit math.isfinite check in speed validator, plus focused tests | Resolving on agy/01-api-scaffold |
 
 Capture errors verbatim where practical, with brief reproduction steps and the commit that resolved them. Do not erase failures after fixing; mark them resolved.
 
@@ -213,23 +234,22 @@ Record actual imported files, exact upstream commit, license and attribution in 
 
 | Component/file | Source URL + commit | License / notice | Adaptation | Verified? |
 |---|---|---|---|---|
-| WareTwin | WayneChou-bot/WareTwin@81f365f | MIT | Read scene architecture / no code copied | Verified |
-| 3D Express Warehouse | jiaxiantao/3d-express-warehouse@8554816 | MIT | Read slot/rack concepts / no code copied | Verified |
+| — | — | — | — | — |
 
 For AI-generated code, record agent/model where known, scope, human inspection performed, tests and security review. Avoid unsupported statements about model versions or automated testing.
 
 ## 10. Demo and submission evidence
 
 - [x] Public GitHub repo created and reachable (gh repo create and push succeeded)
-- [x] Cloudflare Pages production deployment reachable (https://warehouse-intelligence-twin.pages.dev)
 - [ ] `README.md` documents source, preprocessing, simulated assumptions, setup, dependencies, AI tooling, results and limitations
-- [x] 3D racks/aisles/dock load
-- [x] Picker animation follows valid aisle geometry
-- [ ] Original / automatic / player slotting replay exact same order set (real dataset)
-- [ ] Distance/time comparison tested and reproducible with real dataset
+- [ ] 3D racks/aisles/dock load
+- [ ] Picker animation follows valid aisle geometry
+- [ ] Original / automatic / player slotting replay exact same order set
+- [ ] Distance/time comparison tested and reproducible
 - [ ] SQL display, safe read-only controls and trap cases tested (if extension delivered)
-- [x] Relevant attribution / licenses included in THIRD_PARTY_NOTICES.md
-- [ ] Final demo recording and slide deck verified
+- [ ] Relevant attribution / licenses included
+- [ ] Deployed URL tested, or allowed local/demo-video exception documented
+- [ ] Demo recording and slide deck verified
 - [ ] Social links and official submission fields verified against participant instructions
 
 ## 11. Final retrospective (fill only after sprint)
@@ -245,3 +265,12 @@ For AI-generated code, record agent/model where known, scope, human inspection p
 **Final repository commit:** TBD
 
 **Submission links and timestamps:** TBD
+
+### [2026-10-22 11:23:38 IST | T+029] Additional named design references inspected
+- **Owner / model:** Reference subagent; exact model not asserted.
+- **Change:** Verified official WATON, WareBee, and Siemens/NVIDIA sources, plus a related ConnectMQ conveyor tutorial; sent observed scene/panel/slotting ideas to Sol. No source code or assets copied.
+- **Files:** THIRD_PARTY_NOTICES.md.
+- **Commit / PR:** Included in the deployment/reference documentation milestone; see Git history.
+- **Validation:** Source retrieval and documentation reads only; no application tests run for this research entry.
+- **Blockers / risks:** Exact project named Digital Twin Conveyor was not uniquely verified; related tutorial is identified as such. Vendor performance figures are not this project's measurements.
+- **Next:** Sol applies the requested visual upgrade without adding unverified telemetry or savings.
