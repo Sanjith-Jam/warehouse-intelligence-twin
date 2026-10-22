@@ -73,6 +73,18 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Blockers / risks:** Agent reports are evidence to review, not automatic PASS marks.
 - **Next integration dependency:** Every agent records completed milestones, commit/PR URLs, tests, blockers, and technical decisions; AGY adds entries in its PRs or supplies text for Codex to incorporate.
 
+### [2026-10-22 11:15 IST | T+021] Backend FastAPI API scaffold, exact contracts, router and tests verified
+- **Owner / model:** AGY / Gemini Flash
+- **Change:** Implemented full backend runnable FastAPI server with CORS (allowing http://localhost:5173), strict Pydantic schemas conforming to contracts/api.md, GET /health, GET /api/demo, GET /api/warehouse, GET /api/orders, and POST /api/simulate with deterministic BFS routing, baseline slotting, and 422 validations. Added startup instructions, requirements.txt, .env.example, and 12 unit/integration tests in tests/.
+- **Files:** `backend/app/main.py`, `backend/app/config.py`, `backend/app/models/schemas.py`, `backend/app/models/__init__.py`, `backend/app/api/health.py`, `backend/app/api/demo.py`, `backend/app/api/warehouse.py`, `backend/app/api/orders.py`, `backend/app/api/simulate.py`, `backend/app/api/__init__.py`, `backend/app/data/fixtures.py`, `backend/app/data/loader.py`, `backend/app/data/__init__.py`, `backend/app/simulation/router.py`, `backend/app/simulation/__init__.py`, `backend/requirements.txt`, `backend/README.md`, `.env.example`, `backend/.env.example`, `tests/conftest.py`, `tests/test_health.py`, `tests/test_demo.py`, `tests/test_warehouse.py`, `tests/test_orders.py`, `tests/test_simulate.py`, `tests/test_router_unit.py`.
+- **Branch:** agy/01-api-scaffold
+- **Commit:** Pending commit
+- **PR:** Pending PR
+- **Validation:** `.venv/bin/pytest tests/ -v` passed 12/12 tests in 0.08s. Live uvicorn daemon curl tests verified HTTP 200 and exact JSON payloads for /health, /api/demo, /api/warehouse, /api/orders, and /api/simulate (distance 3.0m, pick time 12.5s, waypoints [[0,0],[1,0],[0,0]]), plus HTTP 422 for invalid requests.
+- **Evidence:** Pytest test run and curl outputs verified on localhost:8000.
+- **Blockers / risks:** None. Fixture data labeled synthetic per contract.
+- **Next integration dependency:** Codex reviews and merges PR; AGY starts agy/02-orders-data.
+
 ### Entry format (copy for each actual event)
 
 ```markdown
@@ -124,11 +136,11 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 
 | Endpoint (planned) | Expected function | Status |
 |---|---|---|
-| `GET /health` | Service status | NOT IMPLEMENTED/UNVERIFIED |
-| `GET /api/demo` | Frontend bootstrap: metadata, layout, products, orders | NOT IMPLEMENTED/UNVERIFIED |
-| `GET /api/warehouse` | Aisles, slots, products, dock and coordinates | NOT IMPLEMENTED/UNVERIFIED |
-| `GET /api/orders` | Stable order snapshot, filtered order lines | NOT IMPLEMENTED/UNVERIFIED |
-| `POST /api/simulate` | Layout scenario → walkable picker path and metrics | NOT IMPLEMENTED/UNVERIFIED |
+| `GET /health` | Service status | VERIFIED (200 OK) |
+| `GET /api/demo` | Frontend bootstrap: metadata, layout, products, orders | VERIFIED (200 OK, exact contract shape) |
+| `GET /api/warehouse` | Aisles, slots, products, dock and coordinates | VERIFIED (200 OK) |
+| `GET /api/orders` | Stable order snapshot, filtered order lines | VERIFIED (200 OK) |
+| `POST /api/simulate` | Layout scenario → walkable picker path and metrics | VERIFIED (200 OK, original/baseline/player + 422 validations) |
 | `POST /api/analyze` | Natural language → validated read-only SQL + result | NOT IMPLEMENTED/UNVERIFIED |
 
 **Contract decisions to record:** coordinate system and units; stable SKU/slot/order IDs; cancellation treatment; picker speed; route ordering and interpolation; number formats; errors and timeouts; schema version. Attach concrete request/response samples to the contract, not to speculative log entries.
