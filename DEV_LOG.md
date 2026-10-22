@@ -73,6 +73,21 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **Blockers / risks:** Agent reports are evidence to review, not automatic PASS marks.
 - **Next integration dependency:** Every agent records completed milestones, commit/PR URLs, tests, blockers, and technical decisions; AGY adds entries in its PRs or supplies text for Codex to incorporate.
 
+### [2026-10-22 11:10:28 IST | T+016] Frontend milestone verified; Cloudflare deployment requested
+- **Owner / model:** Sol Medium (gpt-6-sol, medium reasoning) built frontend/ and DESIGN.md. Codex reviewed and integrated. Separate reference subagent inspected source/licenses and wrote THIRD_PARTY_NOTICES.md; its exact model is not asserted.
+- **Change:** React/Vite/TypeScript/R3F app with original primitive racks/cartons, dock, picker, isometric/top cameras, keyboard-accessible two-slot swapping, demand shading, product search, orders, server-backed original/baseline/player comparison, live replay counters, play/pause/reset, and explicit 6x playback. Offline synthetic preview is visibly labeled and unscored.
+- **Files:** frontend/**, DESIGN.md, THIRD_PARTY_NOTICES.md, README.md, .gitignore.
+- **Branch:** codex/frontend.
+- **Commit / PR:** FRONTEND_PUBLICATION_PENDING.
+- **Validation (Codex rerun):** npm test passed 3/3, 0 failures; npm run build passed TypeScript and Vite 7.3.7 (594 modules), JS 1,172.28 kB / 331.02 kB gzip. Node environment v26.11.1; declared support is >=22.12, not independently tested on that minimum. git diff --check passed.
+- **Browser verification:** Playwright CLI synthetic API fixture passed identical ordered inputs/speed across policies, policy switching, play/pause/reset, stale-result invalidation after swaps, new mapping submission, orders tab, top view, and 390px no-horizontal-overflow check. Fresh synthetic run had 0 console errors/warnings. Reproducible fixture is frontend/checks/browser-contract-check.js. This does not verify AGY backend or real savings.
+- **Offline verification:** Returned browser to unmocked preview; no backend is running locally, so Vite proxy /api/demo returned HTTP 500 and UI accurately displayed backend unavailable, scoring disabled. Screenshot captured outside product repository in task outputs/warehouse-frontend-preview.png.
+- **Review fixes:** Replaced cross-corner 2D easing with frame-by-frame sampling of returned cardinal segments. Fixed shared-request state races, added 25s fetch timeout, validated snapshot/order/assignment/access-cell/route/metric consistency, and removed nested HTML roots after React unmount errors. New malformed-order assertion passes.
+- **Agent-reported supplemental checks:** npm install reported 0 vulnerabilities; design lint 0 errors with 6 advisory orphan-token warnings. These supplemental checks were reported by Sol, not independently rerun by Codex.
+- **Reference evidence:** WareTwin MIT revision 81f365f323e1a097e5819ca9045637544163f219 and 3D Express Warehouse MIT revision 8554816a504416f7327e47862e9f29053927e179 cloned/read outside product tree; no code/assets copied or untrusted scripts executed. SI Storage showcase read; source URL HTTP 404. Reference agent recorded 05:30:33–05:31:54 UTC; see THIRD_PARTY_NOTICES.md.
+- **Blockers / risks:** AGY has no open PR at latest explicit checkpoint. Real data, real backend integration, public deployment, and hardware performance remain unverified. Vite warns about bundle size; optional analytics intentionally omitted.
+- **Next integration dependency:** Publish/review/squash frontend PR; install Cloudflare setup requested by operator and deploy static frontend on free tier. Public preview will remain unscored until backend is connected.
+
 ### Entry format (copy for each actual event)
 
 ```markdown
@@ -156,7 +171,7 @@ Record the actual input file hash and date range, selected month, raw row counts
 
 | Agent | Current task | Last push | Remaining quota (actual UI reading) | Blocker |
 |---|---|---|---|---|
-| Codex / Sol Medium | Not started / unverified | — | Not checked | — |
+| Codex / Sol Medium | Frontend build/unit/synthetic browser checks pass; real backend integration pending | Frontend publication pending | Read at 2026-10-22 11:10:28 IST: Codex 5h used 21%, weekly used 25%; no AGY quota claimed | Backend PR pending |
 | AGY / Claude | Not started / unverified | — | Not checked | — |
 | AGY / Gemini Flash | Not started / unverified | — | Not checked | — |
 | Luna, if assigned | Not started / unverified | — | Not checked | — |
