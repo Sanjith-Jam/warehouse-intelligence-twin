@@ -1,6 +1,6 @@
 # DEV_LOG.md — Warehouse Intelligence Twin
 
-> **Status:** Repository initialization verified; application implementation is in progress. Application tests, dataset processing, deployment, and completed application features are not yet verified.
+> **Status:** Repository initialization verified; application implementation is in progress. Frontend build, synthetic browser checks, static deployment, and backend scaffold tests are verified. Real-month processing and deployed backend integration remain pending.
 >
 > **Event:** NEXAI 2026 Hackathon | **Official problem:** PS 4.2 — Warehouse Digital Twin / 3D Picking Floor Game | **Extension:** PS 1.2-inspired Ask-Your-Data retail analytics | **Hardware:** None | **Sprint:** 3 hours from the team's actual start time.
 >
@@ -100,6 +100,27 @@ Entries are recorded at verification time. Git timestamps remain the evidence fo
 - **New user direction:** Frontend considered too simple; Sol Medium dispatched for a scene-first industrial workspace redesign using inspected source references. User explicitly requires actual UCI data; AGY requested to deliver the real-month preprocessing milestone, hashes/counts/filter provenance and ~100 SKUs. No real data processing is claimed by this entry.
 - **Next:** Integrate AGY's corrected PR, inspect upgraded frontend, and redeploy only the verified next build.
 
+### [2026-10-22 11:15 IST | T+021] Backend FastAPI API scaffold, exact contracts, router and tests verified
+- **Owner / model:** AGY / Gemini Flash
+- **Change (AGY-reported; CORS detail updated after review):** Implemented full backend runnable FastAPI server with CORS (allowing http://localhost:5173 and https://warehouse-intelligence-twin.pages.dev), strict Pydantic schemas conforming to contracts/api.md, GET /health, GET /api/demo, GET /api/warehouse, GET /api/orders, and POST /api/simulate with deterministic BFS routing, baseline slotting, and 422 validations. Added startup instructions, requirements.txt, .env.example, and 12 unit/integration tests in tests/.
+- **Files:** `backend/app/main.py`, `backend/app/config.py`, `backend/app/models/schemas.py`, `backend/app/models/__init__.py`, `backend/app/api/health.py`, `backend/app/api/demo.py`, `backend/app/api/warehouse.py`, `backend/app/api/orders.py`, `backend/app/api/simulate.py`, `backend/app/api/__init__.py`, `backend/app/data/fixtures.py`, `backend/app/data/loader.py`, `backend/app/data/__init__.py`, `backend/app/simulation/router.py`, `backend/app/simulation/__init__.py`, `backend/requirements.txt`, `backend/README.md`, `.env.example`, `backend/.env.example`, `tests/conftest.py`, `tests/test_health.py`, `tests/test_demo.py`, `tests/test_warehouse.py`, `tests/test_orders.py`, `tests/test_simulate.py`, `tests/test_router_unit.py`.
+- **Branch:** agy/01-api-scaffold
+- **Commit:** [6cb33d1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/commit/6cb33d1)
+- **PR:** [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3)
+- **Validation:** `.venv/bin/pytest tests/ -v` passed 12/12 tests in 0.08s. Live uvicorn daemon curl tests verified HTTP 200 and exact JSON payloads for /health, /api/demo, /api/warehouse, /api/orders, and /api/simulate (distance 3.0m, pick time 12.5s, waypoints [[0,0],[1,0],[0,0]]), plus HTTP 422 for invalid requests.
+- **Evidence:** Pytest test run and curl outputs verified on localhost:8000.
+- **Blockers / risks:** Fixture data is synthetic. Initial review found a nonfinite-speed defect; see subsequent Codex verification entry for its resolution.
+- **Next integration dependency:** Address Codex review comments on finite-speed validator and merge conflicts; merge to main; AGY starts agy/02-orders-data.
+
+
+### [2026-10-22 11:31:20 IST | T+037] Backend PR #3 fixes independently verified and shared logs reconciled
+- **Owner / model:** AGY implemented backend changes on its branch; Codex reviewed and resolved canonical shared documentation conflicts. No backend code was rewritten by Codex.
+- **Commit / PR:** AGY head 07b32f79ca9835809f5e1bf7d5730d776cfd9885, PR #3. Reconciliation uses an ordinary merge commit preserving both histories; no force push.
+- **Validation:** Isolated Python 3.12.15 review environment installed backend/requirements.txt; python -m pytest tests -q passed 13/13 in 0.23s, one Starlette/httpx deprecation warning. Reviewed explicit math.isfinite speed rejection, regression cases, and production Pages CORS configuration. Original NaN defect is fixed in this revision.
+- **Files:** AGY backend/, tests/, environment examples; Codex merged only DEV_LOG.md and STATUS.md conflicts, preserving published deployment/reference history and AGY's milestone report.
+- **Dataset evidence:** Downloaded official UCI ZIP from https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip: 45,622,418 bytes, SHA256 572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb. Extracted online_retail_II.xlsx: 45,622,278 bytes, SHA256 bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980. Source file verified only; monthly preprocessing, counts, and savings remain pending.
+- **Next:** Squash-merge verified PR #3; AGY branches from fresh main for real-month export. Frontend visual upgrade remains in progress on Codex's separate branch.
+
 ### Entry format (copy for each actual event)
 
 ```markdown
@@ -139,7 +160,7 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 | codex/dev-log | Canonical development log | [#1](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/1) | 2432aec | Documentation diff whitespace check passed | Codex merged | eed189f |
 | codex/frontend | 3D floor, swaps, exact waypoint playback, comparison | [#2](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/2) | 10e7de6 | Build, 3 unit checks, synthetic browser pass | Codex reviewed and squash-merged | 6089b88 |
 |---|---|---|---|---|---|---|
-| `agy/01-api-scaffold` | FastAPI `/health`, API skeleton | Not opened | — | — | Pending | — |
+| `agy/01-api-scaffold` | FastAPI scaffold, routing, validation | [#3](https://github.com/Sanjith-Jam/warehouse-intelligence-twin/pull/3) | 07b32f7 | Codex: 13 passed (0.23s) | Reviewed; merge pending | Pending |
 | `agy/02-orders-data` | Retail preprocessing and stable order fixtures | Not opened | — | — | Pending | — |
 | `agy/03-path-and-slotting` | Aisle routing and three-way replay metrics | Not opened | — | — | Pending | — |
 | `agy/04-analytics-sql` | DuckDB, read-only SQL and query provenance | Not opened | — | — | Pending | — |
@@ -153,11 +174,11 @@ Add one row when a PR actually exists. Branch names below are anticipated, not p
 
 | Endpoint (planned) | Expected function | Status |
 |---|---|---|
-| `GET /health` | Service status | NOT IMPLEMENTED/UNVERIFIED |
-| `GET /api/demo` | Frontend bootstrap: metadata, layout, products, orders | NOT IMPLEMENTED/UNVERIFIED |
-| `GET /api/warehouse` | Aisles, slots, products, dock and coordinates | NOT IMPLEMENTED/UNVERIFIED |
-| `GET /api/orders` | Stable order snapshot, filtered order lines | NOT IMPLEMENTED/UNVERIFIED |
-| `POST /api/simulate` | Layout scenario → walkable picker path and metrics | NOT IMPLEMENTED/UNVERIFIED |
+| `GET /health` | Service status | VERIFIED in isolated scaffold tests; public API pending |
+| `GET /api/demo` | Frontend bootstrap: metadata, layout, products, orders | VERIFIED in isolated scaffold tests; public API pending |
+| `GET /api/warehouse` | Aisles, slots, products, dock and coordinates | VERIFIED in isolated scaffold tests; public API pending |
+| `GET /api/orders` | Stable order snapshot, filtered order lines | VERIFIED in isolated scaffold tests; public API pending |
+| `POST /api/simulate` | Layout scenario → walkable picker path and metrics | VERIFIED in isolated scaffold tests; public API pending |
 | `POST /api/analyze` | Natural language → validated read-only SQL + result | NOT IMPLEMENTED/UNVERIFIED |
 
 **Contract decisions to record:** coordinate system and units; stable SKU/slot/order IDs; cancellation treatment; picker speed; route ordering and interpolation; number formats; errors and timeouts; schema version. Attach concrete request/response samples to the contract, not to speculative log entries.
@@ -168,7 +189,7 @@ Record the actual input file hash and date range, selected month, raw row counts
 
 | Field | Measured value | Verification |
 |---|---|---|
-| Source file + SHA256 | TBD | — |
+| Source file + SHA256 | online_retail_II.xlsx; bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980 | Codex UCI download + SHA256 |
 | Source date range | TBD | — |
 | Selected month | TBD | — |
 | Source rows / filtered rows | TBD / TBD | — |
